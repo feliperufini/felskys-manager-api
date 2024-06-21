@@ -1,0 +1,26 @@
+{
+  "name": "felskys-manager-api",
+  "version": "0.0.0",
+  "description": "Felsky's Website Manager API",
+  "type": "module",
+  "main": "index.js",
+  "keywords": [],
+  "author": "Felsky",
+  "license": "MIT",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "lint": "eslint src --ext .ts --fix"
+  },
+  "dependencies": {
+    "fastify": "^4.28.0",
+    "knex": "^3.1.0",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@rocketseat/eslint-config": "^2.2.2",
+    "@types/node": "^20.14.7",
+    "eslint": "^8.57.0",
+    "tsx": "^4.15.7",
+    "typescript": "^5.5.2"
+  }
+}
