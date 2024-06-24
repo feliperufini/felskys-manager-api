@@ -1,12 +1,11 @@
 import fastify from 'fastify'
-import { table } from './database'
 import { env } from './env'
+import { organizationsRoutes } from './routes/organizations'
 
 const app = fastify()
 
-app.get('/hello', async () => {
-  const tables = await table('sqlite_schema').select('*')
-  return tables
+app.register(organizationsRoutes, {
+  prefix: 'organizations',
 })
 
 app
