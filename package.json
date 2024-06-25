@@ -2,7 +2,6 @@
   "name": "felskys-manager-api",
   "version": "0.0.0",
   "description": "Felsky's Website Manager API",
-  "type": "module",
   "main": "index.js",
   "keywords": [],
   "author": "Felsky",
