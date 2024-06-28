@@ -15,7 +15,6 @@ export async function organizationsRoutes(app: FastifyInstance) {
     const getOrganizationsParamsSchema = z.object({
       id: z.string().uuid(),
     })
-
     const { id } = getOrganizationsParamsSchema.parse(request.params)
 
     const organization = await table('organizations').where('id', id).first()
@@ -29,7 +28,6 @@ export async function organizationsRoutes(app: FastifyInstance) {
       businessName: z.string(),
       document: z.string(),
     })
-
     const { legalName, businessName, document } =
       createOrganizationBodySchema.parse(request.body)
 
@@ -40,6 +38,21 @@ export async function organizationsRoutes(app: FastifyInstance) {
       document: removeSpecialCharacters(document),
     })
 
-    return response.status(201).send('Organização cadastrada com sucesso!')
+    return response
+      .status(201)
+      .send({ message: 'Organização cadastrada com sucesso!' })
+  })
+
+  app.delete('/:id', async (request, response) => {
+    const getOrganizationsParamsSchema = z.object({
+      id: z.string().uuid(),
+    })
+    const { id } = getOrganizationsParamsSchema.parse(request.params)
+
+    await table('organizations').where('id', id).del()
+
+    return response
+      .status(200)
+      .send({ message: 'Organização deletada com sucesso!' })
   })
 }
