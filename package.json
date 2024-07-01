@@ -11,15 +11,14 @@
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "knex": "node --no-warnings --import tsx ./node_modules/knex/bin/cli.js",
     "lint": "eslint src --ext .ts --fix",
     "test": "vitest",
     "build": "tsup src --out-dir build"
   },
   "dependencies": {
+    "@prisma/client": "^5.16.1",
     "dotenv": "^16.4.5",
     "fastify": "^4.28.0",
-    "knex": "^3.1.0",
     "pg": "^8.12.0",
     "vitest": "^1.6.0",
     "zod": "^3.23.8"
@@ -29,6 +28,7 @@
     "@types/node": "^20.14.7",
     "@types/supertest": "^6.0.2",
     "eslint": "^8.57.0",
+    "prisma": "^5.16.1",
     "sqlite3": "^5.1.7",
     "supertest": "^7.0.0",
     "tsup": "^8.1.0",
