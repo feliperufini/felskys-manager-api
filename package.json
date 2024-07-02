@@ -16,6 +16,7 @@
     "build": "tsup src --out-dir build"
   },
   "dependencies": {
+    "@fastify/cors": "^9.0.1",
     "@prisma/client": "^5.16.1",
     "dotenv": "^16.4.5",
     "fastify": "^4.28.0",

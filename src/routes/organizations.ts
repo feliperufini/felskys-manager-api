@@ -17,7 +17,7 @@ export async function organizationsRoutes(app: FastifyInstance) {
     })
     const { id } = getOrganizationsParamsSchema.parse(request.params)
 
-    const organization = await prisma.organizations.findUnique({
+    const organization = await prisma.organizations.findUniqueOrThrow({
       where: {
         id,
       },
