@@ -6,7 +6,7 @@ import { prisma } from '../lib/prisma'
 
 export async function organizationsRoutes(app: FastifyInstance) {
   app.get('/', async () => {
-    const organizations = await prisma.organizations.findMany()
+    const organizations = await prisma.organization.findMany()
 
     return { organizations }
   })
@@ -17,7 +17,7 @@ export async function organizationsRoutes(app: FastifyInstance) {
     })
     const { id } = getOrganizationsParamsSchema.parse(request.params)
 
-    const organization = await prisma.organizations.findUniqueOrThrow({
+    const organization = await prisma.organization.findUniqueOrThrow({
       where: {
         id,
       },
@@ -37,7 +37,7 @@ export async function organizationsRoutes(app: FastifyInstance) {
       createOrganizationBodySchema.parse(request.body)
 
     try {
-      await prisma.organizations.create({
+      await prisma.organization.create({
         data: {
           id: randomUUID(),
           legalName,
@@ -74,13 +74,13 @@ export async function organizationsRoutes(app: FastifyInstance) {
       legalName: z.string(),
       businessName: z.string(),
       document: z.string(),
-      status: z.boolean(),
+      isActive: z.boolean(),
     })
-    const { legalName, businessName, document, status } =
+    const { legalName, businessName, document, isActive } =
       updateOrganizationBodySchema.parse(request.body)
 
     try {
-      await prisma.organizations.update({
+      await prisma.organization.update({
         where: {
           id,
         },
@@ -88,7 +88,7 @@ export async function organizationsRoutes(app: FastifyInstance) {
           legalName,
           businessName,
           document,
-          status,
+          isActive,
           updatedAt: new Date(),
         },
       })
@@ -118,7 +118,7 @@ export async function organizationsRoutes(app: FastifyInstance) {
     const { id } = getOrganizationsParamsSchema.parse(request.params)
 
     try {
-      await prisma.organizations.delete({ where: { id } })
+      await prisma.organization.delete({ where: { id } })
 
       return response
         .status(200)
