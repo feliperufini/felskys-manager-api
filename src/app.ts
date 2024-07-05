@@ -2,6 +2,7 @@ import fastify from 'fastify'
 import fastifyCors from '@fastify/cors'
 import { organizationsRoutes } from './routes/organizations'
 import { rolesRoutes } from './routes/roles'
+import { usersRoutes } from './routes/users'
 
 export const app = fastify()
 
@@ -15,4 +16,8 @@ app.register(organizationsRoutes, {
 
 app.register(rolesRoutes, {
   prefix: 'roles',
+})
+
+app.register(usersRoutes, {
+  prefix: 'users',
 })

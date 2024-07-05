@@ -28,6 +28,21 @@ model Role {
   organizationId String
   createdAt      DateTime     @default(now()) @map("created_at")
   updatedAt      DateTime     @default(now()) @map("updated_at")
+  user           User[]
 
   @@map("roles")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  nickname     String
+  email        String
+  passwordHash String   @map("password_hash")
+  isActive     Boolean  @default(true) @map("is_active")
+  role         Role     @relation(fields: [roleId], references: [id])
+  roleId       String
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @default(now()) @map("updated_at")
+
+  @@map("users")
 }
