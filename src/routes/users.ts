@@ -2,15 +2,17 @@ import { z } from 'zod'
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../lib/prisma'
 import { randomUUID } from 'crypto'
+import { hash } from 'bcryptjs'
+import { ZodTypeProvider } from 'fastify-type-provider-zod'
 
 export async function usersRoutes(app: FastifyInstance) {
-  app.get('/', async () => {
+  app.withTypeProvider<ZodTypeProvider>().get('/', async () => {
     const users = await prisma.user.findMany()
 
     return { users }
   })
 
-  app.get('/:id', async (request) => {
+  app.withTypeProvider<ZodTypeProvider>().get('/:id', async (request) => {
     const getUsersParamsSchema = z.object({
       id: z.string().uuid(),
     })
@@ -25,113 +27,146 @@ export async function usersRoutes(app: FastifyInstance) {
     return { user }
   })
 
-  app.post('/', async (request, response) => {
-    const createUserBodySchema = z.object({
-      nickname: z.string(),
-      email: z.string().email(),
-      password: z.string(),
-      roleId: z.string(),
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .post('/', async (request, response) => {
+      const createUserBodySchema = z
+        .object({
+          nickname: z.string(),
+          email: z.string().email(),
+          password: z.string(),
+          role_id: z.string(),
+        })
+        .required()
+
+      const { nickname, email, password, role_id } = createUserBodySchema.parse(
+        request.body,
+      )
+
+      try {
+        const passwordHash = await hash(password, 8)
+
+        await prisma.user.create({
+          data: {
+            id: randomUUID(),
+            nickname,
+            email,
+            password_hash: passwordHash,
+            role_id,
+          },
+        })
+
+        return response
+          .status(201)
+          .send({ message: 'Usuário cadastrado com sucesso!' })
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          return response.status(400).send({
+            message: 'Erro ao cadastrar o usuário.',
+            error: error?.message,
+          })
+        } else {
+          return response.status(400).send({
+            message: 'Erro ao cadastrar o usuário.',
+            error,
+          })
+        }
+      }
     })
 
-    const { nickname, email, password, roleId } = createUserBodySchema.parse(
-      request.body,
-    )
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .put('/:id', async (request, response) => {
+      const getUsersParamsSchema = z.object({
+        id: z.string().uuid(),
+      })
+      const { id } = getUsersParamsSchema.parse(request.params)
 
-    try {
-      await prisma.user.create({
-        data: {
-          id: randomUUID(),
-          nickname,
-          email,
-          passwordHash: hash(password),
-          roleId,
-        },
+      const updateUserBodySchema = z.object({
+        nickname: z.string(),
+        email: z.string().email(),
+        password: z.string().nullish(),
+        role_id: z.string(),
       })
 
-      return response
-        .status(201)
-        .send({ message: 'Usuário cadastrado com sucesso!' })
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return response.status(400).send({
-          message: 'Erro ao cadastrar o usuário.',
-          error: error?.message,
-        })
-      } else {
-        return response.status(400).send({
-          message: 'Erro ao cadastrar o usuário.',
-          error,
-        })
+      const { nickname, email, password, role_id } = updateUserBodySchema.parse(
+        request.body,
+      )
+
+      try {
+        if (password) {
+          const passwordHash = await hash(password, 8)
+
+          await prisma.user.update({
+            where: {
+              id,
+            },
+            data: {
+              nickname,
+              email,
+              password_hash: passwordHash,
+              role_id,
+              updated_at: new Date(),
+            },
+          })
+        } else {
+          await prisma.user.update({
+            where: {
+              id,
+            },
+            data: {
+              nickname,
+              email,
+              role_id,
+              updated_at: new Date(),
+            },
+          })
+        }
+
+        return response
+          .status(201)
+          .send({ message: 'Usuário atualizado com sucesso!' })
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          return response.status(400).send({
+            message: 'Erro ao atualizar o usuário.',
+            error: error?.message,
+          })
+        } else {
+          return response.status(400).send({
+            message: 'Erro ao atualizar o usuário.',
+            error,
+          })
+        }
       }
-    }
-  })
-
-  app.put('/:id', async (request, response) => {
-    const getUsersParamsSchema = z.object({
-      id: z.string().uuid(),
     })
-    const { id } = getUsersParamsSchema.parse(request.params)
 
-    const updateUserBodySchema = z.object({
-      name: z.string(),
-      description: z.string(),
-    })
-    const { name, description } = updateUserBodySchema.parse(request.body)
-
-    try {
-      await prisma.user.update({
-        where: {
-          id,
-        },
-        data: {
-          name,
-          description,
-          updatedAt: new Date(),
-        },
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .delete('/:id', async (request, response) => {
+      const getUsersParamsSchema = z.object({
+        id: z.string().uuid(),
       })
+      const { id } = getUsersParamsSchema.parse(request.params)
 
-      return response
-        .status(201)
-        .send({ message: 'Usuário atualizado com sucesso!' })
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return response.status(400).send({
-          message: 'Erro ao atualizar o usuário.',
-          error: error?.message,
-        })
-      } else {
-        return response.status(400).send({
-          message: 'Erro ao atualizar o usuário.',
-          error,
-        })
+      try {
+        await prisma.user.delete({ where: { id } })
+
+        return response
+          .status(200)
+          .send({ message: 'Usuário deletado com sucesso!' })
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          return response.status(400).send({
+            message: 'Erro ao deletar o usuário.',
+            error: error?.message,
+          })
+        } else {
+          return response.status(400).send({
+            message: 'Erro ao deletar o usuário.',
+            error,
+          })
+        }
       }
-    }
-  })
-
-  app.delete('/:id', async (request, response) => {
-    const getUsersParamsSchema = z.object({
-      id: z.string().uuid(),
     })
-    const { id } = getUsersParamsSchema.parse(request.params)
-
-    try {
-      await prisma.user.delete({ where: { id } })
-
-      return response
-        .status(200)
-        .send({ message: 'Usuário deletado com sucesso!' })
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return response.status(400).send({
-          message: 'Erro ao deletar o usuário.',
-          error: error?.message,
-        })
-      } else {
-        return response.status(400).send({
-          message: 'Erro ao deletar o usuário.',
-          error,
-        })
-      }
-    }
-  })
 }

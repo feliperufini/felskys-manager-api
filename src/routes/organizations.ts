@@ -1,17 +1,19 @@
-import { z } from 'zod'
 import { randomUUID } from 'crypto'
 import { FastifyInstance } from 'fastify'
-import { removeSpecialCharacters } from '../utils/generalHelper'
+import { z } from 'zod'
 import { prisma } from '../lib/prisma'
+import { removeSpecialCharacters } from '../utils/general-helper'
+import { ZodTypeProvider } from 'fastify-type-provider-zod'
+import { ClientError } from '../error-handler'
 
 export async function organizationsRoutes(app: FastifyInstance) {
-  app.get('/', async () => {
+  app.withTypeProvider<ZodTypeProvider>().get('/', async () => {
     const organizations = await prisma.organization.findMany()
 
     return { organizations }
   })
 
-  app.get('/:id', async (request) => {
+  app.withTypeProvider<ZodTypeProvider>().get('/:id', async (request) => {
     const getOrganizationsParamsSchema = z.object({
       id: z.string().uuid(),
     })
@@ -23,118 +25,128 @@ export async function organizationsRoutes(app: FastifyInstance) {
       },
     })
 
+    if (!organization) {
+      throw new ClientError('Viagem não encontrada.')
+    }
+
     return { organization }
   })
 
-  app.post('/', async (request, response) => {
-    const createOrganizationBodySchema = z.object({
-      legalName: z.string(),
-      businessName: z.string(),
-      document: z.string(),
-    })
-
-    const { legalName, businessName, document } =
-      createOrganizationBodySchema.parse(request.body)
-
-    try {
-      await prisma.organization.create({
-        data: {
-          id: randomUUID(),
-          legalName,
-          businessName,
-          document: removeSpecialCharacters(document),
-        },
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .post('/', async (request, response) => {
+      const createOrganizationBodySchema = z.object({
+        legal_name: z.string(),
+        business_name: z.string(),
+        document: z.string(),
       })
 
-      return response
-        .status(201)
-        .send({ message: 'Organização cadastrada com sucesso!' })
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return response.status(400).send({
-          message: 'Erro ao cadastrar a organização.',
-          error: error?.message,
+      const { legal_name, business_name, document } =
+        createOrganizationBodySchema.parse(request.body)
+
+      try {
+        await prisma.organization.create({
+          data: {
+            id: randomUUID(),
+            legal_name,
+            business_name,
+            document: removeSpecialCharacters(document),
+          },
         })
-      } else {
-        return response.status(400).send({
-          message: 'Erro ao cadastrar a organização.',
-          error,
-        })
+
+        return response
+          .status(201)
+          .send({ message: 'Organização cadastrada com sucesso!' })
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          return response.status(400).send({
+            message: 'Erro ao cadastrar a organização.',
+            error: error?.message,
+          })
+        } else {
+          return response.status(400).send({
+            message: 'Erro ao cadastrar a organização.',
+            error,
+          })
+        }
       }
-    }
-  })
-
-  app.put('/:id', async (request, response) => {
-    const getOrganizationsParamsSchema = z.object({
-      id: z.string().uuid(),
     })
-    const { id } = getOrganizationsParamsSchema.parse(request.params)
 
-    const updateOrganizationBodySchema = z.object({
-      legalName: z.string(),
-      businessName: z.string(),
-      document: z.string(),
-      isActive: z.boolean(),
-    })
-    const { legalName, businessName, document, isActive } =
-      updateOrganizationBodySchema.parse(request.body)
-
-    try {
-      await prisma.organization.update({
-        where: {
-          id,
-        },
-        data: {
-          legalName,
-          businessName,
-          document,
-          isActive,
-          updatedAt: new Date(),
-        },
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .put('/:id', async (request, response) => {
+      const getOrganizationsParamsSchema = z.object({
+        id: z.string().uuid(),
       })
+      const { id } = getOrganizationsParamsSchema.parse(request.params)
 
-      return response
-        .status(201)
-        .send({ message: 'Organização atualizada com sucesso!' })
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return response.status(400).send({
-          message: 'Erro ao atualizar a organização.',
-          error: error?.message,
+      const updateOrganizationBodySchema = z.object({
+        legal_name: z.string(),
+        business_name: z.string(),
+        document: z.string(),
+        is_active: z.boolean(),
+      })
+      const { legal_name, business_name, document, is_active } =
+        updateOrganizationBodySchema.parse(request.body)
+
+      try {
+        await prisma.organization.update({
+          where: {
+            id,
+          },
+          data: {
+            legal_name,
+            business_name,
+            document,
+            is_active,
+            updated_at: new Date(),
+          },
         })
-      } else {
-        return response.status(400).send({
-          message: 'Erro ao atualizar a organização.',
-          error,
-        })
+
+        return response
+          .status(201)
+          .send({ message: 'Organização atualizada com sucesso!' })
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          return response.status(400).send({
+            message: 'Erro ao atualizar a organização.',
+            error: error?.message,
+          })
+        } else {
+          return response.status(400).send({
+            message: 'Erro ao atualizar a organização.',
+            error,
+          })
+        }
       }
-    }
-  })
-
-  app.delete('/:id', async (request, response) => {
-    const getOrganizationsParamsSchema = z.object({
-      id: z.string().uuid(),
     })
-    const { id } = getOrganizationsParamsSchema.parse(request.params)
 
-    try {
-      await prisma.organization.delete({ where: { id } })
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .delete('/:id', async (request, response) => {
+      const getOrganizationsParamsSchema = z.object({
+        id: z.string().uuid(),
+      })
+      const { id } = getOrganizationsParamsSchema.parse(request.params)
 
-      return response
-        .status(200)
-        .send({ message: 'Organização deletada com sucesso!' })
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return response.status(400).send({
-          message: 'Erro ao deletar a organização.',
-          error: error?.message,
-        })
-      } else {
-        return response.status(400).send({
-          message: 'Erro ao deletar a organização.',
-          error,
-        })
+      try {
+        await prisma.organization.delete({ where: { id } })
+
+        return response
+          .status(200)
+          .send({ message: 'Organização deletada com sucesso!' })
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          return response.status(400).send({
+            message: 'Erro ao deletar a organização.',
+            error: error?.message,
+          })
+        } else {
+          return response.status(400).send({
+            message: 'Erro ao deletar a organização.',
+            error,
+          })
+        }
       }
-    }
-  })
+    })
 }
