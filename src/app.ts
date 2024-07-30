@@ -5,9 +5,10 @@ import {
   validatorCompiler,
 } from 'fastify-type-provider-zod'
 import { errorHandler } from './error-handler'
-import { organizationsRoutes } from './routes/organizations'
-import { rolesRoutes } from './routes/roles'
-import { usersRoutes } from './routes/users'
+import { invoiceRoutes } from './routes/invoices'
+import { organizationRoutes } from './routes/organizations'
+import { roleRoutes } from './routes/roles'
+import { userRoutes } from './routes/users'
 
 export const app = fastify()
 
@@ -20,14 +21,18 @@ app.register(fastifyCors, {
   origin: '*',
 })
 
-app.register(organizationsRoutes, {
+app.register(invoiceRoutes, {
+  prefix: 'invoices',
+})
+
+app.register(organizationRoutes, {
   prefix: 'organizations',
 })
 
-app.register(rolesRoutes, {
+app.register(roleRoutes, {
   prefix: 'roles',
 })
 
-app.register(usersRoutes, {
+app.register(userRoutes, {
   prefix: 'users',
 })

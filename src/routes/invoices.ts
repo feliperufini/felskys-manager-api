@@ -4,63 +4,69 @@ import { FastifyInstance } from 'fastify'
 import { prisma } from '../lib/prisma'
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
 
-export async function roleRoutes(app: FastifyInstance) {
+export async function invoiceRoutes(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get('/', async () => {
-    const roles = await prisma.role.findMany()
+    const invoices = await prisma.invoice.findMany()
 
-    return { roles }
+    const newInvoices = invoices.map((invoice) => ({
+      ...invoice,
+      amount: Number(invoice.amount),
+    }))
+
+    return { invoices: newInvoices }
   })
 
   app.withTypeProvider<ZodTypeProvider>().get('/:id', async (request) => {
-    const getRolesParamsSchema = z.object({
+    const getInvoicesParamsSchema = z.object({
       id: z.string().uuid(),
     })
-    const { id } = getRolesParamsSchema.parse(request.params)
+    const { id } = getInvoicesParamsSchema.parse(request.params)
 
-    const role = await prisma.role.findUniqueOrThrow({
+    const invoice = await prisma.invoice.findUniqueOrThrow({
       where: {
         id,
       },
     })
 
-    return { role }
+    return { invoice }
   })
 
   app
     .withTypeProvider<ZodTypeProvider>()
     .post('/', async (request, response) => {
-      const createRoleBodySchema = z.object({
-        name: z.string(),
-        description: z.string(),
+      const createInvoiceBodySchema = z.object({
+        amount: z.number(),
+        due_date: z.coerce.string().datetime(),
+        status: z.enum(['PENDING', 'PAID', 'PARTIAL']).nullish(),
         organization_id: z.string().uuid(),
       })
 
-      const { name, description, organization_id } = createRoleBodySchema.parse(
-        request.body,
-      )
+      const { amount, due_date, status, organization_id } =
+        createInvoiceBodySchema.parse(request.body)
 
       try {
-        await prisma.role.create({
+        await prisma.invoice.create({
           data: {
             id: randomUUID(),
-            name,
-            description,
+            amount,
+            due_date,
+            status: status ?? 'PENDING',
             organization_id,
           },
         })
 
         return response
           .status(201)
-          .send({ message: 'Função cadastrada com sucesso!' })
+          .send({ message: 'Fatura cadastrada com sucesso!' })
       } catch (error: unknown) {
         if (error instanceof Error) {
           return response.status(400).send({
-            message: 'Erro ao cadastrar a função.',
+            message: 'Erro ao cadastrar a fatura.',
             error: error?.message,
           })
         } else {
           return response.status(400).send({
-            message: 'Erro ao cadastrar a função.',
+            message: 'Erro ao cadastrar a fatura.',
             error,
           })
         }
@@ -70,41 +76,45 @@ export async function roleRoutes(app: FastifyInstance) {
   app
     .withTypeProvider<ZodTypeProvider>()
     .put('/:id', async (request, response) => {
-      const getRolesParamsSchema = z.object({
+      const getInvoicesParamsSchema = z.object({
         id: z.string().uuid(),
       })
-      const { id } = getRolesParamsSchema.parse(request.params)
+      const { id } = getInvoicesParamsSchema.parse(request.params)
 
-      const updateRoleBodySchema = z.object({
-        name: z.string(),
-        description: z.string(),
+      const updateInvoiceBodySchema = z.object({
+        amount: z.number().nonnegative(),
+        due_date: z.coerce.string().datetime(),
+        status: z.enum(['PENDING', 'PAID', 'PARTIAL']),
       })
-      const { name, description } = updateRoleBodySchema.parse(request.body)
+      const { amount, due_date, status } = updateInvoiceBodySchema.parse(
+        request.body,
+      )
 
       try {
-        await prisma.role.update({
+        await prisma.invoice.update({
           where: {
             id,
           },
           data: {
-            name,
-            description,
+            amount,
+            due_date,
+            status,
             updated_at: new Date(),
           },
         })
 
         return response
           .status(201)
-          .send({ message: 'Função atualizada com sucesso!' })
+          .send({ message: 'Fatura atualizada com sucesso!' })
       } catch (error: unknown) {
         if (error instanceof Error) {
           return response.status(400).send({
-            message: 'Erro ao atualizar a função.',
+            message: 'Erro ao atualizar a fatura.',
             error: error?.message,
           })
         } else {
           return response.status(400).send({
-            message: 'Erro ao atualizar a função.',
+            message: 'Erro ao atualizar a fatura.',
             error,
           })
         }
@@ -114,26 +124,26 @@ export async function roleRoutes(app: FastifyInstance) {
   app
     .withTypeProvider<ZodTypeProvider>()
     .delete('/:id', async (request, response) => {
-      const getRolesParamsSchema = z.object({
+      const getInvoicesParamsSchema = z.object({
         id: z.string().uuid(),
       })
-      const { id } = getRolesParamsSchema.parse(request.params)
+      const { id } = getInvoicesParamsSchema.parse(request.params)
 
       try {
-        await prisma.role.delete({ where: { id } })
+        await prisma.invoice.delete({ where: { id } })
 
         return response
           .status(200)
-          .send({ message: 'Função deletada com sucesso!' })
+          .send({ message: 'Fatura deletada com sucesso!' })
       } catch (error: unknown) {
         if (error instanceof Error) {
           return response.status(400).send({
-            message: 'Erro ao deletar a função.',
+            message: 'Erro ao deletar a fatura.',
             error: error?.message,
           })
         } else {
           return response.status(400).send({
-            message: 'Erro ao deletar a função.',
+            message: 'Erro ao deletar a fatura.',
             error,
           })
         }

@@ -6,7 +6,7 @@ import { removeSpecialCharacters } from '../utils/general-helper'
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { ClientError } from '../error-handler'
 
-export async function organizationsRoutes(app: FastifyInstance) {
+export async function organizationRoutes(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get('/', async () => {
     const organizations = await prisma.organization.findMany()
 

@@ -5,7 +5,7 @@ import { randomUUID } from 'crypto'
 import { hash } from 'bcryptjs'
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
 
-export async function usersRoutes(app: FastifyInstance) {
+export async function userRoutes(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get('/', async () => {
     const users = await prisma.user.findMany()
 
@@ -34,7 +34,7 @@ export async function usersRoutes(app: FastifyInstance) {
         nickname: z.string(),
         email: z.string().email(),
         password: z.string(),
-        role_id: z.string(),
+        role_id: z.string().uuid(),
       })
 
       const { nickname, email, password, role_id } = createUserBodySchema.parse(
@@ -84,7 +84,7 @@ export async function usersRoutes(app: FastifyInstance) {
         nickname: z.string(),
         email: z.string().email(),
         password: z.string().nullish(),
-        role_id: z.string(),
+        role_id: z.string().uuid(),
       })
 
       const { nickname, email, password, role_id } = updateUserBodySchema.parse(
