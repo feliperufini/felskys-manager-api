@@ -133,3 +133,4 @@ build
 # Personal Ignores
 db/app.db
 tips.local
+*.mwb.bak

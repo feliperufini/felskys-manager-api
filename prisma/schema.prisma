@@ -8,36 +8,40 @@ datasource db {
 }
 
 model Organization {
-  id            String   @id @default(uuid())
-  legal_name    String
+  id            String    @id @default(uuid())
+  legal_name    String    @unique
   business_name String
-  document      String
-  is_active     Boolean  @default(true)
-  created_at    DateTime @default(now())
-  updated_at    DateTime @default(now())
+  document      String    @unique
+  is_active     Boolean   @default(true)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @default(now())
   roles         Role[]
+  websites      Website[]
+  invoices      Invoice[]
 
   @@map("organizations")
 }
 
 model Role {
-  id              String   @id @default(uuid())
+  id              String       @id @default(uuid())
   name            String
-  description     String
+  description     String?
   organization_id String
-  created_at      DateTime @default(now())
-  updated_at      DateTime @default(now())
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @default(now())
   users           User[]
+  permissions     Permission[]
 
   organization Organization @relation(fields: [organization_id], references: [id])
 
+  @@unique([name, organization_id]) // unique name per organization
   @@map("roles")
 }
 
 model User {
   id            String   @id @default(uuid())
   nickname      String
-  email         String
+  email         String   @unique
   password_hash String
   is_active     Boolean  @default(true)
   role_id       String
@@ -47,4 +51,81 @@ model User {
   role Role @relation(fields: [role_id], references: [id])
 
   @@map("users")
+}
+
+model Website {
+  id              String          @id @default(uuid())
+  title           String
+  domain          String          @unique
+  organization_id String
+  created_at      DateTime        @default(now())
+  updated_at      DateTime        @default(now())
+  website_modules WebsiteModule[]
+
+  organization Organization @relation(fields: [organization_id], references: [id])
+
+  @@map("websites")
+}
+
+model WebsiteModule {
+  id          String       @id @default(uuid())
+  title       String       @unique
+  slug        String       @unique
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @default(now())
+  websites    Website[]
+  permissions Permission[]
+
+  @@map("website_modules")
+}
+
+model Permission {
+  id                String   @id @default(uuid())
+  action            String
+  translated_name   String
+  website_module_id String
+  created_at        DateTime @default(now())
+  updated_at        DateTime @default(now())
+  roles             Role[]
+
+  website_module WebsiteModule @relation(fields: [website_module_id], references: [id])
+
+  @@map("permissions")
+}
+
+// utilizar ENUM caso o banco de dados seja Postgres
+// enum InvoiceStatus {
+//   PENDING
+//   PAID
+//   OVERDUE
+// }
+
+model Invoice {
+  id              String    @id @default(uuid())
+  amount          Decimal
+  due_date        DateTime
+  status          String // SQLite
+  // status         InvoiceStatus // Postgres
+  organization_id String
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @default(now())
+  payments        Payment[]
+
+  organization Organization @relation(fields: [organization_id], references: [id])
+
+  @@map("invoices")
+}
+
+model Payment {
+  id             String   @id @default(uuid())
+  amount         Decimal
+  payment_date   DateTime
+  payment_method String
+  invoice_id     String
+  created_at     DateTime @default(now())
+  updated_at     DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoice_id], references: [id])
+
+  @@map("payments")
 }

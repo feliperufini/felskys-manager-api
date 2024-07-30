@@ -30,14 +30,12 @@ export async function usersRoutes(app: FastifyInstance) {
   app
     .withTypeProvider<ZodTypeProvider>()
     .post('/', async (request, response) => {
-      const createUserBodySchema = z
-        .object({
-          nickname: z.string(),
-          email: z.string().email(),
-          password: z.string(),
-          role_id: z.string(),
-        })
-        .required()
+      const createUserBodySchema = z.object({
+        nickname: z.string(),
+        email: z.string().email(),
+        password: z.string(),
+        role_id: z.string(),
+      })
 
       const { nickname, email, password, role_id } = createUserBodySchema.parse(
         request.body,
@@ -94,34 +92,44 @@ export async function usersRoutes(app: FastifyInstance) {
       )
 
       try {
-        if (password) {
-          const passwordHash = await hash(password, 8)
+        const userWithThisEmail = await prisma.user.findUnique({
+          where: {
+            email,
+            NOT: {
+              id,
+            },
+          },
+        })
 
-          await prisma.user.update({
-            where: {
-              id,
-            },
-            data: {
-              nickname,
-              email,
-              password_hash: passwordHash,
-              role_id,
-              updated_at: new Date(),
-            },
-          })
-        } else {
-          await prisma.user.update({
-            where: {
-              id,
-            },
-            data: {
-              nickname,
-              email,
-              role_id,
-              updated_at: new Date(),
-            },
+        if (userWithThisEmail) {
+          return response.status(409).send({
+            message: 'Este email já está sendo utilizado.',
           })
         }
+
+        type UpdateRequestType = {
+          nickname: string
+          email: string
+          role_id: string
+          updated_at: Date
+          password_hash?: string
+        }
+
+        const requestUserData: UpdateRequestType = {
+          nickname,
+          email,
+          role_id,
+          updated_at: new Date(),
+        }
+
+        if (password) {
+          requestUserData.password_hash = await hash(password, 8)
+        }
+
+        await prisma.user.update({
+          where: { id },
+          data: requestUserData,
+        })
 
         return response
           .status(201)
