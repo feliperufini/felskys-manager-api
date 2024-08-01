@@ -93,7 +93,6 @@ model Permission {
   @@map("permissions")
 }
 
-// utilizar ENUM caso o banco de dados seja Postgres
 // enum InvoiceStatus {
 //   PENDING
 //   PAID
@@ -116,11 +115,21 @@ model Invoice {
   @@map("invoices")
 }
 
+// enum PaymentStatus {
+//   CASH
+//   PIX
+//   BANK_SLIP
+//   CREDIT
+//   DEBIT
+//   OTHERS
+// }
+
 model Payment {
   id             String   @id @default(uuid())
   amount         Decimal
   payment_date   DateTime
-  payment_method String
+  payment_method String // SQLite
+  // payment_method PaymentStatus // Postgres
   invoice_id     String
   created_at     DateTime @default(now())
   updated_at     DateTime @default(now())

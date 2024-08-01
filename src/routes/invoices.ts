@@ -26,9 +26,27 @@ export async function invoiceRoutes(app: FastifyInstance) {
       where: {
         id,
       },
+      include: {
+        payments: true,
+      },
     })
 
-    return { invoice }
+    const newInvoices = {
+      ...invoice,
+      amount: Number(invoice.amount),
+      total_paid: invoice.payments.reduce(
+        (total, payment) => total + Number(payment.amount),
+        0,
+      ),
+      payments: invoice.payments.map((payment) => {
+        return {
+          ...payment,
+          amount: Number(payment.amount),
+        }
+      }),
+    }
+
+    return { invoice: newInvoices }
   })
 
   app

@@ -9,6 +9,7 @@ import { invoiceRoutes } from './routes/invoices'
 import { organizationRoutes } from './routes/organizations'
 import { roleRoutes } from './routes/roles'
 import { userRoutes } from './routes/users'
+import { paymentRoutes } from './routes/payments'
 
 export const app = fastify()
 
@@ -27,6 +28,10 @@ app.register(invoiceRoutes, {
 
 app.register(organizationRoutes, {
   prefix: 'organizations',
+})
+
+app.register(paymentRoutes, {
+  prefix: 'payments',
 })
 
 app.register(roleRoutes, {
