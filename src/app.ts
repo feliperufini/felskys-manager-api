@@ -11,6 +11,7 @@ import { roleRoutes } from './routes/roles'
 import { userRoutes } from './routes/users'
 import { paymentRoutes } from './routes/payments'
 import { websiteRoutes } from './routes/websites'
+import { websiteModuleRoutes } from './routes/website-modules'
 
 export const app = fastify()
 
@@ -51,6 +52,6 @@ app.register(websiteRoutes, {
   prefix: 'websites',
 })
 
-// app.register(websiteModuleRoutes, {
-//   prefix: 'website-modules',
-// })
+app.register(websiteModuleRoutes, {
+  prefix: 'website-modules',
+})

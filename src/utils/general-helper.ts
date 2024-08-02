@@ -104,3 +104,13 @@ export function addZerosToNumber(number: number | string, zerosLength: number) {
   const zeros = zerosLength - number.toString().length
   return '0'.repeat(zeros > 0 ? zeros : 0) + number
 }
+
+export function generateSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
