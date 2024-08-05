@@ -35,14 +35,14 @@ export async function organizationRoutes(app: FastifyInstance) {
   app
     .withTypeProvider<ZodTypeProvider>()
     .post('/', async (request, response) => {
-      const createOrganizationBodySchema = z.object({
+      const createOrganizationsBodySchema = z.object({
         legal_name: z.string(),
         business_name: z.string(),
         document: z.string(),
       })
 
       const { legal_name, business_name, document } =
-        createOrganizationBodySchema.parse(request.body)
+        createOrganizationsBodySchema.parse(request.body)
 
       try {
         await prisma.organization.create({
@@ -80,14 +80,14 @@ export async function organizationRoutes(app: FastifyInstance) {
       })
       const { id } = getOrganizationsParamsSchema.parse(request.params)
 
-      const updateOrganizationBodySchema = z.object({
+      const updateOrganizationsBodySchema = z.object({
         legal_name: z.string(),
         business_name: z.string(),
         document: z.string(),
         is_active: z.boolean(),
       })
       const { legal_name, business_name, document, is_active } =
-        updateOrganizationBodySchema.parse(request.body)
+        updateOrganizationsBodySchema.parse(request.body)
 
       try {
         await prisma.organization.update({
@@ -99,7 +99,6 @@ export async function organizationRoutes(app: FastifyInstance) {
             business_name,
             document,
             is_active,
-            updated_at: new Date(),
           },
         })
 

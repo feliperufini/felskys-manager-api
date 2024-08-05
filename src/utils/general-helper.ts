@@ -106,7 +106,17 @@ export function addZerosToNumber(number: number | string, zerosLength: number) {
 }
 
 export function generateSlug(text: string): string {
-  return text
+  return removeTextAccents(text)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+export function generateUnderscoreSlug(text: string): string {
+  return removeTextAccents(text)
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9\s-]/g, '')

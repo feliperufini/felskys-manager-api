@@ -52,7 +52,7 @@ export async function invoiceRoutes(app: FastifyInstance) {
   app
     .withTypeProvider<ZodTypeProvider>()
     .post('/', async (request, response) => {
-      const createInvoiceBodySchema = z.object({
+      const createInvoicesBodySchema = z.object({
         amount: z.number(),
         due_date: z.coerce.string().datetime(),
         status: z.enum(['PENDING', 'PAID', 'PARTIAL']).nullish(),
@@ -60,7 +60,7 @@ export async function invoiceRoutes(app: FastifyInstance) {
       })
 
       const { amount, due_date, status, organization_id } =
-        createInvoiceBodySchema.parse(request.body)
+        createInvoicesBodySchema.parse(request.body)
 
       try {
         await prisma.invoice.create({
@@ -99,12 +99,12 @@ export async function invoiceRoutes(app: FastifyInstance) {
       })
       const { id } = getInvoicesParamsSchema.parse(request.params)
 
-      const updateInvoiceBodySchema = z.object({
+      const updateInvoicesBodySchema = z.object({
         amount: z.number().nonnegative(),
         due_date: z.coerce.string().datetime(),
         status: z.enum(['PENDING', 'PAID', 'PARTIAL']),
       })
-      const { amount, due_date, status } = updateInvoiceBodySchema.parse(
+      const { amount, due_date, status } = updateInvoicesBodySchema.parse(
         request.body,
       )
 
@@ -117,7 +117,6 @@ export async function invoiceRoutes(app: FastifyInstance) {
             amount,
             due_date,
             status,
-            updated_at: new Date(),
           },
         })
 

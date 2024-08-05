@@ -27,13 +27,13 @@ export async function websiteRoutes(app: FastifyInstance) {
   app
     .withTypeProvider<ZodTypeProvider>()
     .post('/', async (request, response) => {
-      const createWebsiteBodySchema = z.object({
+      const createWebsitesBodySchema = z.object({
         title: z.string(),
         domain: z.string().url(),
         organization_id: z.string().uuid(),
       })
 
-      const { title, domain, organization_id } = createWebsiteBodySchema.parse(
+      const { title, domain, organization_id } = createWebsitesBodySchema.parse(
         request.body,
       )
 
@@ -73,12 +73,12 @@ export async function websiteRoutes(app: FastifyInstance) {
       })
       const { id } = getWebsitesParamsSchema.parse(request.params)
 
-      const updateWebsiteBodySchema = z.object({
+      const updateWebsitesBodySchema = z.object({
         title: z.string(),
         domain: z.string().url(),
         organization_id: z.string().uuid(),
       })
-      const { title, domain, organization_id } = updateWebsiteBodySchema.parse(
+      const { title, domain, organization_id } = updateWebsitesBodySchema.parse(
         request.body,
       )
 
@@ -91,7 +91,6 @@ export async function websiteRoutes(app: FastifyInstance) {
             title,
             domain,
             organization_id,
-            updated_at: new Date(),
           },
         })
 

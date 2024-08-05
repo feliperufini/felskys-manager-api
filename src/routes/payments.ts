@@ -39,7 +39,7 @@ export async function paymentRoutes(app: FastifyInstance) {
   app
     .withTypeProvider<ZodTypeProvider>()
     .post('/', async (request, response) => {
-      const createPaymentBodySchema = z.object({
+      const createPaymentsBodySchema = z.object({
         amount: z.number(),
         payment_date: z.coerce.string().datetime(),
         payment_method: z.enum([
@@ -54,7 +54,7 @@ export async function paymentRoutes(app: FastifyInstance) {
       })
 
       const { amount, payment_date, payment_method, invoice_id } =
-        createPaymentBodySchema.parse(request.body)
+        createPaymentsBodySchema.parse(request.body)
 
       try {
         await prisma.$transaction(async (prisma) => {
@@ -122,7 +122,7 @@ export async function paymentRoutes(app: FastifyInstance) {
       })
       const { id } = getPaymentsParamsSchema.parse(request.params)
 
-      const updatePaymentBodySchema = z.object({
+      const updatePaymentsBodySchema = z.object({
         amount: z.number().nonnegative(),
         payment_date: z.coerce.string().datetime(),
         payment_method: z.enum([
@@ -135,7 +135,7 @@ export async function paymentRoutes(app: FastifyInstance) {
         ]),
       })
       const { amount, payment_date, payment_method } =
-        updatePaymentBodySchema.parse(request.body)
+        updatePaymentsBodySchema.parse(request.body)
 
       try {
         await prisma.payment.update({
@@ -146,7 +146,6 @@ export async function paymentRoutes(app: FastifyInstance) {
             amount,
             payment_date,
             payment_method,
-            updated_at: new Date(),
           },
         })
 

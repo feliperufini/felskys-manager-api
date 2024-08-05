@@ -29,15 +29,14 @@ export async function roleRoutes(app: FastifyInstance) {
   app
     .withTypeProvider<ZodTypeProvider>()
     .post('/', async (request, response) => {
-      const createRoleBodySchema = z.object({
+      const createRolesBodySchema = z.object({
         name: z.string(),
         description: z.string(),
         organization_id: z.string().uuid(),
       })
 
-      const { name, description, organization_id } = createRoleBodySchema.parse(
-        request.body,
-      )
+      const { name, description, organization_id } =
+        createRolesBodySchema.parse(request.body)
 
       try {
         await prisma.role.create({
@@ -75,11 +74,11 @@ export async function roleRoutes(app: FastifyInstance) {
       })
       const { id } = getRolesParamsSchema.parse(request.params)
 
-      const updateRoleBodySchema = z.object({
+      const updateRolesBodySchema = z.object({
         name: z.string(),
         description: z.string(),
       })
-      const { name, description } = updateRoleBodySchema.parse(request.body)
+      const { name, description } = updateRolesBodySchema.parse(request.body)
 
       try {
         await prisma.role.update({
@@ -89,7 +88,6 @@ export async function roleRoutes(app: FastifyInstance) {
           data: {
             name,
             description,
-            updated_at: new Date(),
           },
         })
 

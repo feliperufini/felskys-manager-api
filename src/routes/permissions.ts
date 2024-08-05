@@ -3,58 +3,62 @@ import { randomUUID } from 'crypto'
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../lib/prisma'
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
-import { generateSlug } from '../utils/general-helper'
+import { generateUnderscoreSlug } from '../utils/general-helper'
 
-export async function websiteModuleRoutes(app: FastifyInstance) {
+export async function permissionRoutes(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get('/', async () => {
-    const websiteModules = await prisma.websiteModule.findMany()
+    const permissions = await prisma.permission.findMany()
 
-    return { website_modules: websiteModules }
+    return { permissions }
   })
 
   app.withTypeProvider<ZodTypeProvider>().get('/:id', async (request) => {
-    const getWebsiteModulesParamsSchema = z.object({
+    const getPermissionsParamsSchema = z.object({
       id: z.string().uuid(),
     })
-    const { id } = getWebsiteModulesParamsSchema.parse(request.params)
+    const { id } = getPermissionsParamsSchema.parse(request.params)
 
-    const websiteModule = await prisma.websiteModule.findUniqueOrThrow({
+    const permission = await prisma.permission.findUniqueOrThrow({
       where: { id },
     })
 
-    return { website_module: websiteModule }
+    return { permission }
   })
 
   app
     .withTypeProvider<ZodTypeProvider>()
     .post('/', async (request, response) => {
-      const createWebsiteModulesBodySchema = z.object({
-        title: z.string(),
+      const createPermissionsBodySchema = z.object({
+        title: z.string().max(45),
+        website_module_id: z.string().uuid(),
       })
 
-      const { title } = createWebsiteModulesBodySchema.parse(request.body)
+      const { title, website_module_id } = createPermissionsBodySchema.parse(
+        request.body,
+      )
 
       try {
-        await prisma.websiteModule.create({
+        await prisma.permission.create({
           data: {
             id: randomUUID(),
             title,
-            slug: generateSlug(title),
+            action: generateUnderscoreSlug(title),
+            website_module_id,
           },
         })
 
         return response
           .status(201)
-          .send({ message: 'Módulo cadastrado com sucesso!' })
+          .send({ message: 'Permissão cadastrada com sucesso!' })
       } catch (error: unknown) {
         if (error instanceof Error) {
           return response.status(400).send({
-            message: 'Erro ao cadastrar o módulo.',
+            message: 'Erro ao cadastrar a permissão.',
             error: error?.message,
           })
         } else {
           return response.status(400).send({
-            message: 'Erro ao cadastrar o módulo.',
+            message: 'Erro ao cadastrar a permissão.',
             error,
           })
         }
@@ -64,40 +68,45 @@ export async function websiteModuleRoutes(app: FastifyInstance) {
   app
     .withTypeProvider<ZodTypeProvider>()
     .put('/:id', async (request, response) => {
-      const getWebsiteModulesParamsSchema = z.object({
+      const getPermissionsParamsSchema = z.object({
         id: z.string().uuid(),
       })
-      const { id } = getWebsiteModulesParamsSchema.parse(request.params)
+      const { id } = getPermissionsParamsSchema.parse(request.params)
 
-      const updateWebsiteModulesBodySchema = z.object({
+      const updatePermissionsBodySchema = z.object({
         title: z.string(),
-        slug: z.string().nullish(),
+        website_module_id: z.string().uuid(),
+        action: z.string().nullish(),
       })
-      const { title, slug } = updateWebsiteModulesBodySchema.parse(request.body)
+      const { title, website_module_id, action } =
+        updatePermissionsBodySchema.parse(request.body)
 
       try {
-        await prisma.websiteModule.update({
+        await prisma.permission.update({
           where: {
             id,
           },
           data: {
             title,
-            slug: generateSlug(slug && slug !== '' ? slug : title),
+            website_module_id,
+            action: generateUnderscoreSlug(
+              action && action !== '' ? action : title,
+            ),
           },
         })
 
         return response
           .status(201)
-          .send({ message: 'Módulo atualizado com sucesso!' })
+          .send({ message: 'Permissão atualizada com sucesso!' })
       } catch (error: unknown) {
         if (error instanceof Error) {
           return response.status(400).send({
-            message: 'Erro ao atualizar o módulo.',
+            message: 'Erro ao atualizar a permissão.',
             error: error?.message,
           })
         } else {
           return response.status(400).send({
-            message: 'Erro ao atualizar o módulo.',
+            message: 'Erro ao atualizar a permissão.',
             error,
           })
         }
@@ -107,26 +116,26 @@ export async function websiteModuleRoutes(app: FastifyInstance) {
   app
     .withTypeProvider<ZodTypeProvider>()
     .delete('/:id', async (request, response) => {
-      const getWebsiteModulesParamsSchema = z.object({
+      const getPermissionsParamsSchema = z.object({
         id: z.string().uuid(),
       })
-      const { id } = getWebsiteModulesParamsSchema.parse(request.params)
+      const { id } = getPermissionsParamsSchema.parse(request.params)
 
       try {
-        await prisma.websiteModule.delete({ where: { id } })
+        await prisma.permission.delete({ where: { id } })
 
         return response
           .status(200)
-          .send({ message: 'Módulo deletado com sucesso!' })
+          .send({ message: 'Permissão deletada com sucesso!' })
       } catch (error: unknown) {
         if (error instanceof Error) {
           return response.status(400).send({
-            message: 'Erro ao deletar o módulo.',
+            message: 'Erro ao deletar a permissão.',
             error: error?.message,
           })
         } else {
           return response.status(400).send({
-            message: 'Erro ao deletar o módulo.',
+            message: 'Erro ao deletar a permissão.',
             error,
           })
         }

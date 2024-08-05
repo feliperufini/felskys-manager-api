@@ -30,16 +30,15 @@ export async function userRoutes(app: FastifyInstance) {
   app
     .withTypeProvider<ZodTypeProvider>()
     .post('/', async (request, response) => {
-      const createUserBodySchema = z.object({
+      const createUsersBodySchema = z.object({
         nickname: z.string(),
         email: z.string().email(),
         password: z.string(),
         role_id: z.string().uuid(),
       })
 
-      const { nickname, email, password, role_id } = createUserBodySchema.parse(
-        request.body,
-      )
+      const { nickname, email, password, role_id } =
+        createUsersBodySchema.parse(request.body)
 
       try {
         const passwordHash = await hash(password, 8)
@@ -80,16 +79,15 @@ export async function userRoutes(app: FastifyInstance) {
       })
       const { id } = getUsersParamsSchema.parse(request.params)
 
-      const updateUserBodySchema = z.object({
+      const updateUsersBodySchema = z.object({
         nickname: z.string(),
         email: z.string().email(),
         password: z.string().nullish(),
         role_id: z.string().uuid(),
       })
 
-      const { nickname, email, password, role_id } = updateUserBodySchema.parse(
-        request.body,
-      )
+      const { nickname, email, password, role_id } =
+        updateUsersBodySchema.parse(request.body)
 
       try {
         const userWithThisEmail = await prisma.user.findUnique({
@@ -111,7 +109,6 @@ export async function userRoutes(app: FastifyInstance) {
           nickname: string
           email: string
           role_id: string
-          updated_at: Date
           password_hash?: string
         }
 
@@ -119,7 +116,6 @@ export async function userRoutes(app: FastifyInstance) {
           nickname,
           email,
           role_id,
-          updated_at: new Date(),
         }
 
         if (password) {

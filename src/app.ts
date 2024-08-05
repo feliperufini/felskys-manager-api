@@ -7,11 +7,12 @@ import {
 import { errorHandler } from './error-handler'
 import { invoiceRoutes } from './routes/invoices'
 import { organizationRoutes } from './routes/organizations'
+import { paymentRoutes } from './routes/payments'
+import { permissionRoutes } from './routes/permissions'
 import { roleRoutes } from './routes/roles'
 import { userRoutes } from './routes/users'
-import { paymentRoutes } from './routes/payments'
-import { websiteRoutes } from './routes/websites'
 import { websiteModuleRoutes } from './routes/website-modules'
+import { websiteRoutes } from './routes/websites'
 
 export const app = fastify()
 
@@ -36,9 +37,9 @@ app.register(paymentRoutes, {
   prefix: 'payments',
 })
 
-// app.register(permissionRoutes, {
-//   prefix: 'permissions',
-// })
+app.register(permissionRoutes, {
+  prefix: 'permissions',
+})
 
 app.register(roleRoutes, {
   prefix: 'roles',

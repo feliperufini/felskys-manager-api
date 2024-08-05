@@ -14,7 +14,7 @@ model Organization {
   document      String    @unique
   is_active     Boolean   @default(true)
   created_at    DateTime  @default(now())
-  updated_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
   roles         Role[]
   websites      Website[]
   invoices      Invoice[]
@@ -28,7 +28,7 @@ model Role {
   description     String?
   organization_id String
   created_at      DateTime     @default(now())
-  updated_at      DateTime     @default(now())
+  updated_at      DateTime     @updatedAt
   users           User[]
   permissions     Permission[]
 
@@ -46,7 +46,7 @@ model User {
   is_active     Boolean  @default(true)
   role_id       String
   created_at    DateTime @default(now())
-  updated_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
 
   role Role @relation(fields: [role_id], references: [id])
 
@@ -59,7 +59,7 @@ model Website {
   domain          String          @unique
   organization_id String
   created_at      DateTime        @default(now())
-  updated_at      DateTime        @default(now())
+  updated_at      DateTime        @updatedAt
   website_modules WebsiteModule[]
 
   organization Organization @relation(fields: [organization_id], references: [id])
@@ -72,7 +72,7 @@ model WebsiteModule {
   title       String       @unique
   slug        String       @unique
   created_at  DateTime     @default(now())
-  updated_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
   websites    Website[]
   permissions Permission[]
 
@@ -81,11 +81,11 @@ model WebsiteModule {
 
 model Permission {
   id                String   @id @default(uuid())
+  title             String
   action            String
-  translated_name   String
   website_module_id String
   created_at        DateTime @default(now())
-  updated_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
   roles             Role[]
 
   website_module WebsiteModule @relation(fields: [website_module_id], references: [id])
@@ -107,7 +107,7 @@ model Invoice {
   // status         InvoiceStatus // Postgres
   organization_id String
   created_at      DateTime  @default(now())
-  updated_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
   payments        Payment[]
 
   organization Organization @relation(fields: [organization_id], references: [id])
@@ -132,7 +132,7 @@ model Payment {
   // payment_method PaymentStatus // Postgres
   invoice_id     String
   created_at     DateTime @default(now())
-  updated_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
 
   invoice Invoice @relation(fields: [invoice_id], references: [id])
 
