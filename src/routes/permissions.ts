@@ -67,6 +67,66 @@ export async function permissionRoutes(app: FastifyInstance) {
 
   app
     .withTypeProvider<ZodTypeProvider>()
+    .post('/default-permissions', async (request, response) => {
+      const createPermissionsBodySchema = z.object({
+        website_module_id: z.string().uuid(),
+      })
+
+      const { website_module_id } = createPermissionsBodySchema.parse(
+        request.body,
+      )
+
+      try {
+        await prisma.$transaction(async (prisma) => {
+          const websiteModule = await prisma.websiteModule.findUniqueOrThrow({
+            where: {
+              id: website_module_id,
+            },
+          })
+
+          const defaultPermissions = [
+            'Listar',
+            'Buscar',
+            'Cadastrar',
+            'Editar',
+            'Deletar',
+          ]
+
+          for (const defaultPermission of defaultPermissions) {
+            const permissionTitle =
+              defaultPermission + ' ' + websiteModule.title
+
+            await prisma.permission.create({
+              data: {
+                id: randomUUID(),
+                title: permissionTitle,
+                action: generateUnderscoreSlug(permissionTitle),
+                website_module_id,
+              },
+            })
+          }
+        })
+
+        return response
+          .status(201)
+          .send({ message: 'Permissões cadastradas com sucesso!' })
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          return response.status(400).send({
+            message: 'Erro ao cadastrar a permissão.',
+            error: error?.message,
+          })
+        } else {
+          return response.status(400).send({
+            message: 'Erro ao cadastrar a permissão.',
+            error,
+          })
+        }
+      }
+    })
+
+  app
+    .withTypeProvider<ZodTypeProvider>()
     .put('/:id', async (request, response) => {
       const getPermissionsParamsSchema = z.object({
         id: z.string().uuid(),

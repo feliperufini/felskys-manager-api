@@ -35,7 +35,7 @@ export async function websiteModuleRoutes(app: FastifyInstance) {
       const { title } = createWebsiteModulesBodySchema.parse(request.body)
 
       try {
-        await prisma.websiteModule.create({
+        const websiteModule = await prisma.websiteModule.create({
           data: {
             id: randomUUID(),
             title,
@@ -43,9 +43,12 @@ export async function websiteModuleRoutes(app: FastifyInstance) {
           },
         })
 
-        return response
-          .status(201)
-          .send({ message: 'Módulo cadastrado com sucesso!' })
+        return response.status(201).send({
+          message: 'Módulo cadastrado com sucesso!',
+          data: {
+            website_module_id: websiteModule.id,
+          },
+        })
       } catch (error: unknown) {
         if (error instanceof Error) {
           return response.status(400).send({
