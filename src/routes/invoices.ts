@@ -62,33 +62,19 @@ export async function invoiceRoutes(app: FastifyInstance) {
       const { amount, due_date, status, organization_id } =
         createInvoicesBodySchema.parse(request.body)
 
-      try {
-        await prisma.invoice.create({
-          data: {
-            id: randomUUID(),
-            amount,
-            due_date,
-            status: status ?? 'PENDING',
-            organization_id,
-          },
-        })
+      await prisma.invoice.create({
+        data: {
+          id: randomUUID(),
+          amount,
+          due_date,
+          status: status ?? 'PENDING',
+          organization_id,
+        },
+      })
 
-        return response
-          .status(201)
-          .send({ message: 'Fatura cadastrada com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao cadastrar a fatura.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao cadastrar a fatura.',
-            error,
-          })
-        }
-      }
+      return response
+        .status(201)
+        .send({ message: 'Fatura cadastrada com sucesso!' })
     })
 
   app
@@ -108,34 +94,20 @@ export async function invoiceRoutes(app: FastifyInstance) {
         request.body,
       )
 
-      try {
-        await prisma.invoice.update({
-          where: {
-            id,
-          },
-          data: {
-            amount,
-            due_date,
-            status,
-          },
-        })
+      await prisma.invoice.update({
+        where: {
+          id,
+        },
+        data: {
+          amount,
+          due_date,
+          status,
+        },
+      })
 
-        return response
-          .status(201)
-          .send({ message: 'Fatura atualizada com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao atualizar a fatura.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao atualizar a fatura.',
-            error,
-          })
-        }
-      }
+      return response
+        .status(201)
+        .send({ message: 'Fatura atualizada com sucesso!' })
     })
 
   app
@@ -146,24 +118,10 @@ export async function invoiceRoutes(app: FastifyInstance) {
       })
       const { id } = getInvoicesParamsSchema.parse(request.params)
 
-      try {
-        await prisma.invoice.delete({ where: { id } })
+      await prisma.invoice.delete({ where: { id } })
 
-        return response
-          .status(200)
-          .send({ message: 'Fatura deletada com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao deletar a fatura.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao deletar a fatura.',
-            error,
-          })
-        }
-      }
+      return response
+        .status(200)
+        .send({ message: 'Fatura deletada com sucesso!' })
     })
 }

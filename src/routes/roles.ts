@@ -38,32 +38,18 @@ export async function roleRoutes(app: FastifyInstance) {
       const { name, description, organization_id } =
         createRolesBodySchema.parse(request.body)
 
-      try {
-        await prisma.role.create({
-          data: {
-            id: randomUUID(),
-            name,
-            description,
-            organization_id,
-          },
-        })
+      await prisma.role.create({
+        data: {
+          id: randomUUID(),
+          name,
+          description,
+          organization_id,
+        },
+      })
 
-        return response
-          .status(201)
-          .send({ message: 'Função cadastrada com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao cadastrar a função.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao cadastrar a função.',
-            error,
-          })
-        }
-      }
+      return response
+        .status(201)
+        .send({ message: 'Função cadastrada com sucesso!' })
     })
 
   app
@@ -80,33 +66,19 @@ export async function roleRoutes(app: FastifyInstance) {
       })
       const { name, description } = updateRolesBodySchema.parse(request.body)
 
-      try {
-        await prisma.role.update({
-          where: {
-            id,
-          },
-          data: {
-            name,
-            description,
-          },
-        })
+      await prisma.role.update({
+        where: {
+          id,
+        },
+        data: {
+          name,
+          description,
+        },
+      })
 
-        return response
-          .status(201)
-          .send({ message: 'Função atualizada com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao atualizar a função.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao atualizar a função.',
-            error,
-          })
-        }
-      }
+      return response
+        .status(201)
+        .send({ message: 'Função atualizada com sucesso!' })
     })
 
   app
@@ -117,24 +89,10 @@ export async function roleRoutes(app: FastifyInstance) {
       })
       const { id } = getRolesParamsSchema.parse(request.params)
 
-      try {
-        await prisma.role.delete({ where: { id } })
+      await prisma.role.delete({ where: { id } })
 
-        return response
-          .status(200)
-          .send({ message: 'Função deletada com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao deletar a função.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao deletar a função.',
-            error,
-          })
-        }
-      }
+      return response
+        .status(200)
+        .send({ message: 'Função deletada com sucesso!' })
     })
 }

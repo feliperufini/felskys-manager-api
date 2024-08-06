@@ -76,53 +76,38 @@ export async function permissionRoutes(app: FastifyInstance) {
         request.body,
       )
 
-      try {
-        await prisma.$transaction(async (prisma) => {
-          const websiteModule = await prisma.websiteModule.findUniqueOrThrow({
-            where: {
-              id: website_module_id,
-            },
-          })
-
-          const defaultPermissions = [
-            'Listar',
-            'Buscar',
-            'Cadastrar',
-            'Editar',
-            'Deletar',
-          ]
-
-          for (const defaultPermission of defaultPermissions) {
-            const permissionTitle =
-              defaultPermission + ' ' + websiteModule.title
-
-            await prisma.permission.create({
-              data: {
-                id: randomUUID(),
-                title: permissionTitle,
-                action: generateUnderscoreSlug(permissionTitle),
-                website_module_id,
-              },
-            })
-          }
+      await prisma.$transaction(async (prisma) => {
+        const websiteModule = await prisma.websiteModule.findUniqueOrThrow({
+          where: {
+            id: website_module_id,
+          },
         })
 
-        return response
-          .status(201)
-          .send({ message: 'Permissões cadastradas com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao cadastrar a permissão.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao cadastrar a permissão.',
-            error,
+        const defaultPermissions = [
+          'Listar',
+          'Buscar',
+          'Cadastrar',
+          'Editar',
+          'Deletar',
+        ]
+
+        for (const defaultPermission of defaultPermissions) {
+          const permissionTitle = defaultPermission + ' ' + websiteModule.title
+
+          await prisma.permission.create({
+            data: {
+              id: randomUUID(),
+              title: permissionTitle,
+              action: generateUnderscoreSlug(permissionTitle),
+              website_module_id,
+            },
           })
         }
-      }
+      })
+
+      return response
+        .status(201)
+        .send({ message: 'Permissões cadastradas com sucesso!' })
     })
 
   app
@@ -141,36 +126,22 @@ export async function permissionRoutes(app: FastifyInstance) {
       const { title, website_module_id, action } =
         updatePermissionsBodySchema.parse(request.body)
 
-      try {
-        await prisma.permission.update({
-          where: {
-            id,
-          },
-          data: {
-            title,
-            website_module_id,
-            action: generateUnderscoreSlug(
-              action && action !== '' ? action : title,
-            ),
-          },
-        })
+      await prisma.permission.update({
+        where: {
+          id,
+        },
+        data: {
+          title,
+          website_module_id,
+          action: generateUnderscoreSlug(
+            action && action !== '' ? action : title,
+          ),
+        },
+      })
 
-        return response
-          .status(201)
-          .send({ message: 'Permissão atualizada com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao atualizar a permissão.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao atualizar a permissão.',
-            error,
-          })
-        }
-      }
+      return response
+        .status(201)
+        .send({ message: 'Permissão atualizada com sucesso!' })
     })
 
   app
@@ -181,24 +152,10 @@ export async function permissionRoutes(app: FastifyInstance) {
       })
       const { id } = getPermissionsParamsSchema.parse(request.params)
 
-      try {
-        await prisma.permission.delete({ where: { id } })
+      await prisma.permission.delete({ where: { id } })
 
-        return response
-          .status(200)
-          .send({ message: 'Permissão deletada com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao deletar a permissão.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao deletar a permissão.',
-            error,
-          })
-        }
-      }
+      return response
+        .status(200)
+        .send({ message: 'Permissão deletada com sucesso!' })
     })
 }

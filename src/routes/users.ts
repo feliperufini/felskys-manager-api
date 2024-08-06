@@ -1,9 +1,11 @@
-import { z } from 'zod'
-import { FastifyInstance } from 'fastify'
-import { prisma } from '../lib/prisma'
-import { randomUUID } from 'crypto'
 import { hash } from 'bcryptjs'
+import { randomUUID } from 'crypto'
+import { FastifyInstance } from 'fastify'
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
+import { z } from 'zod'
+// import { getDefaultMessageError } from '../error-handler'
+import { prisma } from '../lib/prisma'
+import { checkPasswordIsValid } from '../utils/general-helper'
 
 export async function userRoutes(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get('/', async () => {
@@ -31,44 +33,38 @@ export async function userRoutes(app: FastifyInstance) {
     .withTypeProvider<ZodTypeProvider>()
     .post('/', async (request, response) => {
       const createUsersBodySchema = z.object({
-        nickname: z.string(),
+        nickname: z.string().min(3),
         email: z.string().email(),
-        password: z.string(),
+        password: z.string().min(8),
         role_id: z.string().uuid(),
       })
 
       const { nickname, email, password, role_id } =
         createUsersBodySchema.parse(request.body)
 
-      try {
-        const passwordHash = await hash(password, 8)
-
-        await prisma.user.create({
-          data: {
-            id: randomUUID(),
-            nickname,
-            email,
-            password_hash: passwordHash,
-            role_id,
-          },
+      const isPasswordInvalid = !checkPasswordIsValid(password)
+      if (isPasswordInvalid) {
+        return response.status(422).send({
+          message:
+            'Sua senha precisa ter ao menos 8 caracteres, 1 letra e 1 número.',
         })
-
-        return response
-          .status(201)
-          .send({ message: 'Usuário cadastrado com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao cadastrar o usuário.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao cadastrar o usuário.',
-            error,
-          })
-        }
       }
+
+      const passwordHash = await hash(password, 8)
+
+      await prisma.user.create({
+        data: {
+          id: randomUUID(),
+          nickname,
+          email,
+          password_hash: passwordHash,
+          role_id,
+        },
+      })
+
+      return response
+        .status(201)
+        .send({ message: 'Usuário cadastrado com sucesso!' })
     })
 
   app
@@ -80,7 +76,7 @@ export async function userRoutes(app: FastifyInstance) {
       const { id } = getUsersParamsSchema.parse(request.params)
 
       const updateUsersBodySchema = z.object({
-        nickname: z.string(),
+        nickname: z.string().min(3),
         email: z.string().email(),
         password: z.string().nullish(),
         role_id: z.string().uuid(),
@@ -89,60 +85,39 @@ export async function userRoutes(app: FastifyInstance) {
       const { nickname, email, password, role_id } =
         updateUsersBodySchema.parse(request.body)
 
-      try {
-        const userWithThisEmail = await prisma.user.findUnique({
-          where: {
-            email,
-            NOT: {
-              id,
-            },
-          },
-        })
-
-        if (userWithThisEmail) {
-          return response.status(409).send({
-            message: 'Este email já está sendo utilizado.',
-          })
-        }
-
-        type UpdateRequestType = {
-          nickname: string
-          email: string
-          role_id: string
-          password_hash?: string
-        }
-
-        const requestUserData: UpdateRequestType = {
-          nickname,
-          email,
-          role_id,
-        }
-
-        if (password) {
-          requestUserData.password_hash = await hash(password, 8)
-        }
-
-        await prisma.user.update({
-          where: { id },
-          data: requestUserData,
-        })
-
-        return response
-          .status(201)
-          .send({ message: 'Usuário atualizado com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao atualizar o usuário.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao atualizar o usuário.',
-            error,
-          })
-        }
+      type UpdateRequestType = {
+        nickname: string
+        email: string
+        role_id: string
+        password_hash?: string
       }
+
+      const requestUserData: UpdateRequestType = {
+        nickname,
+        email,
+        role_id,
+      }
+
+      if (password && password !== '') {
+        const isPasswordInvalid = !checkPasswordIsValid(password)
+        if (isPasswordInvalid) {
+          return response.status(422).send({
+            message:
+              'Sua senha precisa ter ao menos 8 caracteres, 1 letra e 1 número.',
+          })
+        }
+
+        requestUserData.password_hash = await hash(password, 8)
+      }
+
+      await prisma.user.update({
+        where: { id },
+        data: requestUserData,
+      })
+
+      return response
+        .status(201)
+        .send({ message: 'Usuário atualizado com sucesso!' })
     })
 
   app
@@ -153,24 +128,10 @@ export async function userRoutes(app: FastifyInstance) {
       })
       const { id } = getUsersParamsSchema.parse(request.params)
 
-      try {
-        await prisma.user.delete({ where: { id } })
+      await prisma.user.delete({ where: { id } })
 
-        return response
-          .status(200)
-          .send({ message: 'Usuário deletado com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao deletar o usuário.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao deletar o usuário.',
-            error,
-          })
-        }
-      }
+      return response
+        .status(200)
+        .send({ message: 'Usuário deletado com sucesso!' })
     })
 }

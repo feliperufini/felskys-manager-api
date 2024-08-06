@@ -44,32 +44,18 @@ export async function organizationRoutes(app: FastifyInstance) {
       const { legal_name, business_name, document } =
         createOrganizationsBodySchema.parse(request.body)
 
-      try {
-        await prisma.organization.create({
-          data: {
-            id: randomUUID(),
-            legal_name,
-            business_name,
-            document: removeSpecialCharacters(document),
-          },
-        })
+      await prisma.organization.create({
+        data: {
+          id: randomUUID(),
+          legal_name,
+          business_name,
+          document: removeSpecialCharacters(document),
+        },
+      })
 
-        return response
-          .status(201)
-          .send({ message: 'Organização cadastrada com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao cadastrar a organização.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao cadastrar a organização.',
-            error,
-          })
-        }
-      }
+      return response
+        .status(201)
+        .send({ message: 'Organização cadastrada com sucesso!' })
     })
 
   app
@@ -89,35 +75,21 @@ export async function organizationRoutes(app: FastifyInstance) {
       const { legal_name, business_name, document, is_active } =
         updateOrganizationsBodySchema.parse(request.body)
 
-      try {
-        await prisma.organization.update({
-          where: {
-            id,
-          },
-          data: {
-            legal_name,
-            business_name,
-            document,
-            is_active,
-          },
-        })
+      await prisma.organization.update({
+        where: {
+          id,
+        },
+        data: {
+          legal_name,
+          business_name,
+          document,
+          is_active,
+        },
+      })
 
-        return response
-          .status(201)
-          .send({ message: 'Organização atualizada com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao atualizar a organização.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao atualizar a organização.',
-            error,
-          })
-        }
-      }
+      return response
+        .status(201)
+        .send({ message: 'Organização atualizada com sucesso!' })
     })
 
   app
@@ -128,24 +100,10 @@ export async function organizationRoutes(app: FastifyInstance) {
       })
       const { id } = getOrganizationsParamsSchema.parse(request.params)
 
-      try {
-        await prisma.organization.delete({ where: { id } })
+      await prisma.organization.delete({ where: { id } })
 
-        return response
-          .status(200)
-          .send({ message: 'Organização deletada com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao deletar a organização.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao deletar a organização.',
-            error,
-          })
-        }
-      }
+      return response
+        .status(200)
+        .send({ message: 'Organização deletada com sucesso!' })
     })
 }

@@ -37,32 +37,18 @@ export async function websiteRoutes(app: FastifyInstance) {
         request.body,
       )
 
-      try {
-        await prisma.website.create({
-          data: {
-            id: randomUUID(),
-            title,
-            domain,
-            organization_id,
-          },
-        })
+      await prisma.website.create({
+        data: {
+          id: randomUUID(),
+          title,
+          domain,
+          organization_id,
+        },
+      })
 
-        return response
-          .status(201)
-          .send({ message: 'Website cadastrado com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao cadastrar o website.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao cadastrar o website.',
-            error,
-          })
-        }
-      }
+      return response
+        .status(201)
+        .send({ message: 'Website cadastrado com sucesso!' })
     })
 
   app
@@ -82,34 +68,20 @@ export async function websiteRoutes(app: FastifyInstance) {
         request.body,
       )
 
-      try {
-        await prisma.website.update({
-          where: {
-            id,
-          },
-          data: {
-            title,
-            domain,
-            organization_id,
-          },
-        })
+      await prisma.website.update({
+        where: {
+          id,
+        },
+        data: {
+          title,
+          domain,
+          organization_id,
+        },
+      })
 
-        return response
-          .status(201)
-          .send({ message: 'Website atualizado com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao atualizar o website.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao atualizar o website.',
-            error,
-          })
-        }
-      }
+      return response
+        .status(201)
+        .send({ message: 'Website atualizado com sucesso!' })
     })
 
   app
@@ -120,24 +92,10 @@ export async function websiteRoutes(app: FastifyInstance) {
       })
       const { id } = getWebsitesParamsSchema.parse(request.params)
 
-      try {
-        await prisma.website.delete({ where: { id } })
+      await prisma.website.delete({ where: { id } })
 
-        return response
-          .status(200)
-          .send({ message: 'Website deletado com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao deletar o website.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao deletar o website.',
-            error,
-          })
-        }
-      }
+      return response
+        .status(200)
+        .send({ message: 'Website deletado com sucesso!' })
     })
 }

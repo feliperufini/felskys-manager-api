@@ -100,6 +100,11 @@ export function formatToMoneyBr(amount: number, symbol: boolean = false) {
   })
 }
 
+export function checkPasswordIsValid(password: string): boolean {
+  const regex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/
+  return regex.test(password)
+}
+
 export function addZerosToNumber(number: number | string, zerosLength: number) {
   const zeros = zerosLength - number.toString().length
   return '0'.repeat(zeros > 0 ? zeros : 0) + number
@@ -123,4 +128,11 @@ export function generateUnderscoreSlug(text: string): string {
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-+|-+$/g, '')
+}
+
+export function extractTextBetweenParentheses(text: string): string {
+  const startIndex = text.indexOf('(')
+  const endIndex = text.indexOf(')')
+
+  return text.substring(startIndex + 1, endIndex)
 }

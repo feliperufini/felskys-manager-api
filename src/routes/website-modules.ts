@@ -34,34 +34,20 @@ export async function websiteModuleRoutes(app: FastifyInstance) {
 
       const { title } = createWebsiteModulesBodySchema.parse(request.body)
 
-      try {
-        const websiteModule = await prisma.websiteModule.create({
-          data: {
-            id: randomUUID(),
-            title,
-            slug: generateSlug(title),
-          },
-        })
+      const websiteModule = await prisma.websiteModule.create({
+        data: {
+          id: randomUUID(),
+          title,
+          slug: generateSlug(title),
+        },
+      })
 
-        return response.status(201).send({
-          message: 'Módulo cadastrado com sucesso!',
-          data: {
-            website_module_id: websiteModule.id,
-          },
-        })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao cadastrar o módulo.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao cadastrar o módulo.',
-            error,
-          })
-        }
-      }
+      return response.status(201).send({
+        message: 'Módulo cadastrado com sucesso!',
+        data: {
+          website_module_id: websiteModule.id,
+        },
+      })
     })
 
   app
@@ -78,33 +64,19 @@ export async function websiteModuleRoutes(app: FastifyInstance) {
       })
       const { title, slug } = updateWebsiteModulesBodySchema.parse(request.body)
 
-      try {
-        await prisma.websiteModule.update({
-          where: {
-            id,
-          },
-          data: {
-            title,
-            slug: generateSlug(slug && slug !== '' ? slug : title),
-          },
-        })
+      await prisma.websiteModule.update({
+        where: {
+          id,
+        },
+        data: {
+          title,
+          slug: generateSlug(slug && slug !== '' ? slug : title),
+        },
+      })
 
-        return response
-          .status(201)
-          .send({ message: 'Módulo atualizado com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao atualizar o módulo.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao atualizar o módulo.',
-            error,
-          })
-        }
-      }
+      return response
+        .status(201)
+        .send({ message: 'Módulo atualizado com sucesso!' })
     })
 
   app
@@ -115,24 +87,10 @@ export async function websiteModuleRoutes(app: FastifyInstance) {
       })
       const { id } = getWebsiteModulesParamsSchema.parse(request.params)
 
-      try {
-        await prisma.websiteModule.delete({ where: { id } })
+      await prisma.websiteModule.delete({ where: { id } })
 
-        return response
-          .status(200)
-          .send({ message: 'Módulo deletado com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao deletar o módulo.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao deletar o módulo.',
-            error,
-          })
-        }
-      }
+      return response
+        .status(200)
+        .send({ message: 'Módulo deletado com sucesso!' })
     })
 }
