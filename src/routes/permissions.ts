@@ -37,32 +37,18 @@ export async function permissionRoutes(app: FastifyInstance) {
         request.body,
       )
 
-      try {
-        await prisma.permission.create({
-          data: {
-            id: randomUUID(),
-            title,
-            action: generateUnderscoreSlug(title),
-            website_module_id,
-          },
-        })
+      await prisma.permission.create({
+        data: {
+          id: randomUUID(),
+          title,
+          action: generateUnderscoreSlug(title),
+          website_module_id,
+        },
+      })
 
-        return response
-          .status(201)
-          .send({ message: 'Permissão cadastrada com sucesso!' })
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          return response.status(400).send({
-            message: 'Erro ao cadastrar a permissão.',
-            error: error?.message,
-          })
-        } else {
-          return response.status(400).send({
-            message: 'Erro ao cadastrar a permissão.',
-            error,
-          })
-        }
-      }
+      return response
+        .status(201)
+        .send({ message: 'Permissão cadastrada com sucesso!' })
     })
 
   app
