@@ -9,6 +9,7 @@ const envSchema = z.object({
   API_BASE_URL: z.string().url(),
   WEB_BASE_URL: z.string().url(),
   API_BASE_PORT: z.coerce.number().default(3333),
+  JWT_SECRET: z.string(),
 })
 
 const _env = envSchema.safeParse(process.env)

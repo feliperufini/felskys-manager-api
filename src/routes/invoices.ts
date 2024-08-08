@@ -1,57 +1,62 @@
-import { z } from 'zod'
 import { randomUUID } from 'crypto'
 import { FastifyInstance } from 'fastify'
-import { prisma } from '../lib/prisma'
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
+import { z } from 'zod'
+import { prisma } from '../libs/prisma'
+import { verifyJwt } from '../middlewares/jwt-auth'
 
 export async function invoiceRoutes(app: FastifyInstance) {
-  app.withTypeProvider<ZodTypeProvider>().get('/', async () => {
-    const invoices = await prisma.invoice.findMany()
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .get('/', { onRequest: [verifyJwt] }, async () => {
+      const invoices = await prisma.invoice.findMany()
 
-    const newInvoices = invoices.map((invoice) => ({
-      ...invoice,
-      amount: Number(invoice.amount),
-    }))
+      const newInvoices = invoices.map((invoice) => ({
+        ...invoice,
+        amount: Number(invoice.amount),
+      }))
 
-    return { invoices: newInvoices }
-  })
-
-  app.withTypeProvider<ZodTypeProvider>().get('/:id', async (request) => {
-    const getInvoicesParamsSchema = z.object({
-      id: z.string().uuid(),
+      return { invoices: newInvoices }
     })
-    const { id } = getInvoicesParamsSchema.parse(request.params)
-
-    const invoice = await prisma.invoice.findUniqueOrThrow({
-      where: {
-        id,
-      },
-      include: {
-        payments: true,
-      },
-    })
-
-    const newInvoices = {
-      ...invoice,
-      amount: Number(invoice.amount),
-      total_paid: invoice.payments.reduce(
-        (total, payment) => total + Number(payment.amount),
-        0,
-      ),
-      payments: invoice.payments.map((payment) => {
-        return {
-          ...payment,
-          amount: Number(payment.amount),
-        }
-      }),
-    }
-
-    return { invoice: newInvoices }
-  })
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .post('/', async (request, response) => {
+    .get('/:id', { onRequest: [verifyJwt] }, async (request) => {
+      const getInvoicesParamsSchema = z.object({
+        id: z.string().uuid(),
+      })
+      const { id } = getInvoicesParamsSchema.parse(request.params)
+
+      const invoice = await prisma.invoice.findUniqueOrThrow({
+        where: {
+          id,
+        },
+        include: {
+          payments: true,
+        },
+      })
+
+      const newInvoices = {
+        ...invoice,
+        amount: Number(invoice.amount),
+        total_paid: invoice.payments.reduce(
+          (total, payment) => total + Number(payment.amount),
+          0,
+        ),
+        payments: invoice.payments.map((payment) => {
+          return {
+            ...payment,
+            amount: Number(payment.amount),
+          }
+        }),
+      }
+
+      return { invoice: newInvoices }
+    })
+
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .post('/', { onRequest: [verifyJwt] }, async (request, response) => {
       const createInvoicesBodySchema = z.object({
         amount: z.number(),
         due_date: z.coerce.string().datetime(),
@@ -79,7 +84,7 @@ export async function invoiceRoutes(app: FastifyInstance) {
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .put('/:id', async (request, response) => {
+    .put('/:id', { onRequest: [verifyJwt] }, async (request, response) => {
       const getInvoicesParamsSchema = z.object({
         id: z.string().uuid(),
       })
@@ -112,7 +117,7 @@ export async function invoiceRoutes(app: FastifyInstance) {
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .delete('/:id', async (request, response) => {
+    .delete('/:id', { onRequest: [verifyJwt] }, async (request, response) => {
       const getInvoicesParamsSchema = z.object({
         id: z.string().uuid(),
       })

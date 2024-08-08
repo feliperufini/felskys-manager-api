@@ -7,7 +7,7 @@ app
     port: env.API_BASE_PORT,
   })
   .then(() => {
-    console.log(
+    console.info(
       `HTTP Server Running...\n${env.API_BASE_URL}:${env.API_BASE_PORT}`,
     )
   })

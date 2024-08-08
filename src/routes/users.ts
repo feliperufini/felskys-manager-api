@@ -3,8 +3,7 @@ import { randomUUID } from 'crypto'
 import { FastifyInstance } from 'fastify'
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { z } from 'zod'
-// import { getDefaultMessageError } from '../error-handler'
-import { prisma } from '../lib/prisma'
+import { prisma } from '../libs/prisma'
 import { checkPasswordIsValid } from '../utils/general-helper'
 
 export async function userRoutes(app: FastifyInstance) {
@@ -79,22 +78,25 @@ export async function userRoutes(app: FastifyInstance) {
         nickname: z.string().min(3),
         email: z.string().email(),
         password: z.string().nullish(),
+        is_active: z.boolean(),
         role_id: z.string().uuid(),
       })
 
-      const { nickname, email, password, role_id } =
+      const { nickname, email, password, is_active, role_id } =
         updateUsersBodySchema.parse(request.body)
 
       type UpdateRequestType = {
         nickname: string
         email: string
-        role_id: string
         password_hash?: string
+        is_active: boolean
+        role_id: string
       }
 
       const requestUserData: UpdateRequestType = {
         nickname,
         email,
+        is_active,
         role_id,
       }
 

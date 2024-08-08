@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { randomUUID } from 'crypto'
 import { FastifyInstance } from 'fastify'
-import { prisma } from '../lib/prisma'
+import { prisma } from '../libs/prisma'
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { generateUnderscoreSlug } from '../utils/general-helper'
 

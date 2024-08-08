@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto'
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { prisma } from '../lib/prisma'
+import { prisma } from '../libs/prisma'
 import { removeSpecialCharacters } from '../utils/general-helper'
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { ClientError } from '../error-handler'
