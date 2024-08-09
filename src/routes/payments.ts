@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto'
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../libs/prisma'
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
+import { ClientError } from '../error-handler'
 
 export async function paymentRoutes(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get('/', async () => {
@@ -40,8 +41,8 @@ export async function paymentRoutes(app: FastifyInstance) {
     .withTypeProvider<ZodTypeProvider>()
     .post('/', async (request, response) => {
       const createPaymentsBodySchema = z.object({
-        amount: z.number(),
-        payment_date: z.coerce.string().datetime(),
+        amount: z.number().positive(),
+        payment_date: z.coerce.date().max(new Date()),
         payment_method: z.enum([
           'CASH',
           'PIX',
@@ -66,14 +67,24 @@ export async function paymentRoutes(app: FastifyInstance) {
           },
         })
 
-        const totalPaid =
+        if (invoice.status === 'PAID') {
+          throw new ClientError('Essa fatura já foi paga.')
+        }
+
+        const newTotalPaid =
           invoice.payments.reduce(
             (total, payment) => total + Number(payment.amount),
             0,
           ) + amount
 
+        if (newTotalPaid > Number(invoice.amount)) {
+          throw new ClientError(
+            'A soma dos pagamentos é maior que o valor da fatura.',
+          )
+        }
+
         const newInvoiceStatus =
-          totalPaid >= Number(invoice.amount) ? 'PAID' : 'PARTIAL'
+          newTotalPaid === Number(invoice.amount) ? 'PAID' : 'PARTIAL'
 
         await prisma.payment.create({
           data: {
@@ -109,8 +120,8 @@ export async function paymentRoutes(app: FastifyInstance) {
       const { id } = getPaymentsParamsSchema.parse(request.params)
 
       const updatePaymentsBodySchema = z.object({
-        amount: z.number().nonnegative(),
-        payment_date: z.coerce.string().datetime(),
+        amount: z.number().positive(),
+        payment_date: z.coerce.date().max(new Date()),
         payment_method: z.enum([
           'CASH',
           'PIX',
@@ -123,15 +134,65 @@ export async function paymentRoutes(app: FastifyInstance) {
       const { amount, payment_date, payment_method } =
         updatePaymentsBodySchema.parse(request.body)
 
-      await prisma.payment.update({
-        where: {
-          id,
-        },
-        data: {
-          amount,
-          payment_date,
-          payment_method,
-        },
+      await prisma.$transaction(async (prisma) => {
+        const payment = await prisma.payment.findUniqueOrThrow({
+          where: {
+            id,
+          },
+          select: {
+            invoice_id: true,
+          },
+        })
+
+        const invoice = await prisma.invoice.findUniqueOrThrow({
+          where: {
+            id: payment.invoice_id,
+          },
+          include: {
+            payments: {
+              where: {
+                NOT: {
+                  id,
+                },
+              },
+            },
+          },
+        })
+
+        const newTotalPaid =
+          invoice.payments.reduce(
+            (total, payment) => total + Number(payment.amount),
+            0,
+          ) + amount
+
+        if (newTotalPaid > Number(invoice.amount)) {
+          throw new ClientError(
+            'A soma dos pagamentos é maior que o valor da fatura.',
+          )
+        }
+
+        const newInvoiceStatus =
+          newTotalPaid === Number(invoice.amount) ? 'PAID' : 'PARTIAL'
+
+        await prisma.payment.update({
+          where: {
+            id,
+          },
+          data: {
+            amount,
+            payment_date,
+            payment_method,
+          },
+        })
+
+        await prisma.invoice.update({
+          where: {
+            id: payment.invoice_id,
+          },
+          data: {
+            status: newInvoiceStatus,
+          },
+        })
       })
 
       return response

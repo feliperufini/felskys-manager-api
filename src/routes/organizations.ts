@@ -4,7 +4,6 @@ import { z } from 'zod'
 import { prisma } from '../libs/prisma'
 import { removeSpecialCharacters } from '../utils/general-helper'
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
-import { ClientError } from '../error-handler'
 
 export async function organizationRoutes(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get('/', async () => {
@@ -24,10 +23,6 @@ export async function organizationRoutes(app: FastifyInstance) {
         id,
       },
     })
-
-    if (!organization) {
-      throw new ClientError('Viagem não encontrada.')
-    }
 
     return { organization }
   })

@@ -4,6 +4,7 @@ import { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { prisma } from '../libs/prisma'
 import { verifyJwt } from '../middlewares/jwt-auth'
+import { ClientError } from '../error-handler'
 
 export async function invoiceRoutes(app: FastifyInstance) {
   app
@@ -59,27 +60,29 @@ export async function invoiceRoutes(app: FastifyInstance) {
     .post('/', { onRequest: [verifyJwt] }, async (request, response) => {
       const createInvoicesBodySchema = z.object({
         amount: z.number(),
-        due_date: z.coerce.string().datetime(),
-        status: z.enum(['PENDING', 'PAID', 'PARTIAL']).nullish(),
+        due_date: z.coerce.date(),
         organization_id: z.string().uuid(),
       })
 
-      const { amount, due_date, status, organization_id } =
+      const { amount, due_date, organization_id } =
         createInvoicesBodySchema.parse(request.body)
 
-      await prisma.invoice.create({
+      const invoice = await prisma.invoice.create({
         data: {
           id: randomUUID(),
           amount,
           due_date,
-          status: status ?? 'PENDING',
+          status: 'PENDING',
           organization_id,
         },
       })
 
-      return response
-        .status(201)
-        .send({ message: 'Fatura cadastrada com sucesso!' })
+      return response.status(201).send({
+        message: 'Fatura cadastrada com sucesso!',
+        data: {
+          invoice_id: invoice.id,
+        },
+      })
     })
 
   app
@@ -91,23 +94,46 @@ export async function invoiceRoutes(app: FastifyInstance) {
       const { id } = getInvoicesParamsSchema.parse(request.params)
 
       const updateInvoicesBodySchema = z.object({
-        amount: z.number().nonnegative(),
-        due_date: z.coerce.string().datetime(),
-        status: z.enum(['PENDING', 'PAID', 'PARTIAL']),
+        amount: z.number().positive(),
+        due_date: z.coerce.date(),
       })
-      const { amount, due_date, status } = updateInvoicesBodySchema.parse(
-        request.body,
-      )
+      const { amount, due_date } = updateInvoicesBodySchema.parse(request.body)
 
-      await prisma.invoice.update({
-        where: {
-          id,
-        },
-        data: {
-          amount,
-          due_date,
-          status,
-        },
+      await prisma.$transaction(async (prisma) => {
+        const oldInvoice = await prisma.invoice.findUniqueOrThrow({
+          where: { id },
+          include: {
+            payments: true,
+          },
+        })
+
+        const invoiceTotalPaid = oldInvoice.payments.reduce(
+          (total, payment) => total + Number(payment.amount),
+          0,
+        )
+
+        let newInvoiceStatus = oldInvoice.status
+
+        if (amount === Number(oldInvoice.amount)) {
+          newInvoiceStatus = oldInvoice.status
+        } else if (amount > invoiceTotalPaid) {
+          newInvoiceStatus = invoiceTotalPaid === 0 ? 'PENDING' : 'PARTIAL'
+        } else {
+          throw new ClientError(
+            'A soma dos pagamentos é maior que o valor da fatura.',
+          )
+        }
+
+        await prisma.invoice.update({
+          where: {
+            id,
+          },
+          data: {
+            amount,
+            due_date,
+            status: newInvoiceStatus,
+          },
+        })
       })
 
       return response

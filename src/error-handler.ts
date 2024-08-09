@@ -1,6 +1,7 @@
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
 import type { FastifyInstance } from 'fastify'
 import { ZodError } from 'zod'
+import { getModuleNameTranslationFromUrl } from './utils/translate-helper'
 
 type FastifyErrorHandler = FastifyInstance['errorHandler']
 
@@ -17,10 +18,12 @@ export const errorHandler: FastifyErrorHandler = (error, request, response) => {
     // ERROS DE VALIDACAO DO PRISMA
     return translatePrismaError(error, request, response)
   } else if (error instanceof ClientError) {
-    // ERROS DE VALIDACAO GERAL/CLIENTE
+    // ERROS DE VALIDACAO GERAL
     return response.status(400).send({
       message: error.message,
-      error,
+      error: {
+        content: 'Erro na validação da operação.',
+      },
     })
   }
 
@@ -31,7 +34,13 @@ export const errorHandler: FastifyErrorHandler = (error, request, response) => {
 }
 
 const translatePrismaError: FastifyErrorHandler = (error, _, response) => {
+  console.log(response.request.url)
+
   if (error instanceof PrismaClientKnownRequestError) {
+    const translatedModuleName = getModuleNameTranslationFromUrl(
+      response.request.url,
+    )
+
     if (error.code === 'P2002') {
       // "Unique constraint failed on the {constraint}"
       const fields = (error.meta?.target as string[]) || []
@@ -49,7 +58,7 @@ const translatePrismaError: FastifyErrorHandler = (error, _, response) => {
     } else if (error.code === 'P2025') {
       // "An operation failed because it depends on one or more records that were required but not found. {cause}"
       return response.status(404).send({
-        message: `Item não encontrado.`,
+        message: `${translatedModuleName} não encontrado(a).`,
         error,
       })
     }
