@@ -27,6 +27,27 @@ export async function organizationRoutes(app: FastifyInstance) {
     return { organization }
   })
 
+  app.withTypeProvider<ZodTypeProvider>().get('/:id/roles', async (request) => {
+    const getOrganizationsParamsSchema = z.object({
+      id: z.string().uuid(),
+    })
+    const { id } = getOrganizationsParamsSchema.parse(request.params)
+
+    const organization = await prisma.organization.findUniqueOrThrow({
+      where: {
+        id,
+      },
+    })
+
+    const roles = await prisma.role.findMany({
+      where: {
+        organization_id: organization.id,
+      },
+    })
+
+    return { roles }
+  })
+
   app
     .withTypeProvider<ZodTypeProvider>()
     .post('/', async (request, response) => {

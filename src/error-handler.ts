@@ -34,8 +34,6 @@ export const errorHandler: FastifyErrorHandler = (error, request, response) => {
 }
 
 const translatePrismaError: FastifyErrorHandler = (error, _, response) => {
-  console.log(response.request.url)
-
   if (error instanceof PrismaClientKnownRequestError) {
     const translatedModuleName = getModuleNameTranslationFromUrl(
       response.request.url,
@@ -52,7 +50,7 @@ const translatePrismaError: FastifyErrorHandler = (error, _, response) => {
     } else if (error.code === 'P2003') {
       // "Foreign key constraint failed on the field: {field_name}"
       return response.status(409).send({
-        message: `ID de referência à outra tabela não encontrado.`,
+        message: 'Falha na restrição de chave estrangeira de outra tabela.',
         error,
       })
     } else if (error.code === 'P2025') {

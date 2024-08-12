@@ -19,6 +19,15 @@ export async function websiteRoutes(app: FastifyInstance) {
 
     const website = await prisma.website.findUniqueOrThrow({
       where: { id },
+      include: {
+        website_modules: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+          },
+        },
+      },
     })
 
     return { website }
@@ -31,11 +40,15 @@ export async function websiteRoutes(app: FastifyInstance) {
         title: z.string(),
         domain: z.string().url(),
         organization_id: z.string().uuid(),
+        website_modules: z.string().uuid().array(),
       })
 
-      const { title, domain, organization_id } = createWebsitesBodySchema.parse(
-        request.body,
-      )
+      const { title, domain, organization_id, website_modules } =
+        createWebsitesBodySchema.parse(request.body)
+
+      const websiteModulesIds = website_modules.map((moduleId) => ({
+        id: moduleId,
+      }))
 
       await prisma.website.create({
         data: {
@@ -43,6 +56,9 @@ export async function websiteRoutes(app: FastifyInstance) {
           title,
           domain,
           organization_id,
+          website_modules: {
+            connect: websiteModulesIds,
+          },
         },
       })
 
@@ -63,19 +79,40 @@ export async function websiteRoutes(app: FastifyInstance) {
         title: z.string(),
         domain: z.string().url(),
         organization_id: z.string().uuid(),
+        website_modules: z.string().uuid().array(),
       })
-      const { title, domain, organization_id } = updateWebsitesBodySchema.parse(
-        request.body,
+      const { title, domain, organization_id, website_modules } =
+        updateWebsitesBodySchema.parse(request.body)
+
+      const websiteModulesIds = website_modules.map((moduleId) => ({
+        id: moduleId,
+      }))
+
+      const existingWebsite = await prisma.website.findUniqueOrThrow({
+        where: { id },
+        select: { website_modules: { select: { id: true } } },
+      })
+
+      const existingModuleIds = existingWebsite.website_modules.map(
+        (module) => module.id,
       )
 
+      const modulesToDisconnect = existingModuleIds
+        .filter((moduleId) => !website_modules.includes(moduleId))
+        .map((moduleId) => ({ id: moduleId }))
+
+      const modulesToConnect = websiteModulesIds
+
       await prisma.website.update({
-        where: {
-          id,
-        },
+        where: { id },
         data: {
           title,
           domain,
           organization_id,
+          website_modules: {
+            disconnect: modulesToDisconnect,
+            connect: modulesToConnect,
+          },
         },
       })
 

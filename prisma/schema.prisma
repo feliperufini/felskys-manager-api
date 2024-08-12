@@ -48,7 +48,9 @@ model User {
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
-  role Role @relation(fields: [role_id], references: [id])
+  role    Role      @relation(fields: [role_id], references: [id])
+  Payment Payment[]
+  Invoice Invoice[]
 
   @@map("users")
 }
@@ -88,7 +90,7 @@ model Permission {
   updated_at        DateTime @updatedAt
   roles             Role[]
 
-  website_module WebsiteModule @relation(fields: [website_module_id], references: [id])
+  website_module WebsiteModule @relation(fields: [website_module_id], references: [id], onDelete: Cascade)
 
   @@map("permissions")
 }
@@ -106,11 +108,13 @@ model Invoice {
   status          String    @default("PENDING") // SQLite
   // status         InvoiceStatus // Postgres
   organization_id String
+  updated_user_id String    @default("c647282a-2899-4096-8484-9508112ab750")
   created_at      DateTime  @default(now())
   updated_at      DateTime  @updatedAt
   payments        Payment[]
 
   organization Organization @relation(fields: [organization_id], references: [id])
+  updated_by   User         @relation(fields: [updated_user_id], references: [id])
 
   @@map("invoices")
 }
@@ -125,16 +129,18 @@ model Invoice {
 // }
 
 model Payment {
-  id             String   @id @default(uuid())
-  amount         Decimal
-  payment_date   DateTime
-  payment_method String // SQLite
+  id              String   @id @default(uuid())
+  amount          Decimal
+  payment_date    DateTime
+  payment_method  String // SQLite
   // payment_method PaymentStatus // Postgres
-  invoice_id     String
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  invoice_id      String
+  updated_user_id String   @default("c647282a-2899-4096-8484-9508112ab750")
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
 
-  invoice Invoice @relation(fields: [invoice_id], references: [id])
+  invoice    Invoice @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  updated_by User    @relation(fields: [updated_user_id], references: [id])
 
   @@map("payments")
 }

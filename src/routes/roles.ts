@@ -21,6 +21,16 @@ export async function roleRoutes(app: FastifyInstance) {
       where: {
         id,
       },
+      include: {
+        permissions: {
+          select: {
+            id: true,
+            title: true,
+            action: true,
+            website_module_id: true,
+          },
+        },
+      },
     })
 
     return { role }
@@ -33,10 +43,15 @@ export async function roleRoutes(app: FastifyInstance) {
         name: z.string(),
         description: z.string(),
         organization_id: z.string().uuid(),
+        permissions: z.string().uuid().array(),
       })
 
-      const { name, description, organization_id } =
+      const { name, description, organization_id, permissions } =
         createRolesBodySchema.parse(request.body)
+
+      const permissionsIds = permissions.map((permissionId) => ({
+        id: permissionId,
+      }))
 
       await prisma.role.create({
         data: {
@@ -44,6 +59,9 @@ export async function roleRoutes(app: FastifyInstance) {
           name,
           description,
           organization_id,
+          permissions: {
+            connect: permissionsIds,
+          },
         },
       })
 
@@ -63,8 +81,30 @@ export async function roleRoutes(app: FastifyInstance) {
       const updateRolesBodySchema = z.object({
         name: z.string(),
         description: z.string(),
+        permissions: z.string().uuid().array(),
       })
-      const { name, description } = updateRolesBodySchema.parse(request.body)
+      const { name, description, permissions } = updateRolesBodySchema.parse(
+        request.body,
+      )
+
+      const permissionsIds = permissions.map((permissionId) => ({
+        id: permissionId,
+      }))
+
+      const existingRole = await prisma.role.findUniqueOrThrow({
+        where: { id },
+        select: { permissions: { select: { id: true } } },
+      })
+
+      const existingRoleIds = existingRole.permissions.map(
+        (module) => module.id,
+      )
+
+      const permissionsToDisconnect = existingRoleIds
+        .filter((moduleId) => !permissions.includes(moduleId))
+        .map((moduleId) => ({ id: moduleId }))
+
+      const permissionsToConnect = permissionsIds
 
       await prisma.role.update({
         where: {
@@ -73,6 +113,10 @@ export async function roleRoutes(app: FastifyInstance) {
         data: {
           name,
           description,
+          permissions: {
+            disconnect: permissionsToDisconnect,
+            connect: permissionsToConnect,
+          },
         },
       })
 
@@ -89,7 +133,17 @@ export async function roleRoutes(app: FastifyInstance) {
       })
       const { id } = getRolesParamsSchema.parse(request.params)
 
-      await prisma.role.delete({ where: { id } })
+      await prisma.$transaction(async (prisma) => {
+        await prisma.user.updateMany({
+          where: { role_id: id },
+          data: {
+            is_active: false,
+            role_id: null,
+          },
+        })
+
+        await prisma.role.delete({ where: { id } })
+      })
 
       return response
         .status(200)
