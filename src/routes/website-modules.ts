@@ -4,30 +4,35 @@ import { FastifyInstance } from 'fastify'
 import { prisma } from '../libs/prisma'
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { generateSlug } from '../utils/general-helper'
+import { userEmailTokenRequest, verifyJwt } from '../middlewares/jwt-auth'
 
 export async function websiteModuleRoutes(app: FastifyInstance) {
-  app.withTypeProvider<ZodTypeProvider>().get('/', async () => {
-    const websiteModules = await prisma.websiteModule.findMany()
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .get('/', { onRequest: [verifyJwt] }, async () => {
+      const websiteModules = await prisma.websiteModule.findMany()
 
-    return { website_modules: websiteModules }
-  })
-
-  app.withTypeProvider<ZodTypeProvider>().get('/:id', async (request) => {
-    const getWebsiteModulesParamsSchema = z.object({
-      id: z.string().uuid(),
+      return { website_modules: websiteModules }
     })
-    const { id } = getWebsiteModulesParamsSchema.parse(request.params)
-
-    const websiteModule = await prisma.websiteModule.findUniqueOrThrow({
-      where: { id },
-    })
-
-    return { website_module: websiteModule }
-  })
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .post('/', async (request, response) => {
+    .get('/:id', { onRequest: [verifyJwt] }, async (request) => {
+      const getWebsiteModulesParamsSchema = z.object({
+        id: z.string().uuid(),
+      })
+      const { id } = getWebsiteModulesParamsSchema.parse(request.params)
+
+      const websiteModule = await prisma.websiteModule.findUniqueOrThrow({
+        where: { id },
+      })
+
+      return { website_module: websiteModule }
+    })
+
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .post('/', { onRequest: [verifyJwt] }, async (request, response) => {
       const createWebsiteModulesBodySchema = z.object({
         title: z.string(),
       })
@@ -39,6 +44,7 @@ export async function websiteModuleRoutes(app: FastifyInstance) {
           id: randomUUID(),
           title,
           slug: generateSlug(title),
+          updated_by: userEmailTokenRequest(request),
         },
       })
 
@@ -52,7 +58,7 @@ export async function websiteModuleRoutes(app: FastifyInstance) {
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .put('/:id', async (request, response) => {
+    .put('/:id', { onRequest: [verifyJwt] }, async (request, response) => {
       const getWebsiteModulesParamsSchema = z.object({
         id: z.string().uuid(),
       })
@@ -71,6 +77,7 @@ export async function websiteModuleRoutes(app: FastifyInstance) {
         data: {
           title,
           slug: generateSlug(slug && slug !== '' ? slug : title),
+          updated_by: userEmailTokenRequest(request),
         },
       })
 
@@ -81,7 +88,7 @@ export async function websiteModuleRoutes(app: FastifyInstance) {
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .delete('/:id', async (request, response) => {
+    .delete('/:id', { onRequest: [verifyJwt] }, async (request, response) => {
       const getWebsiteModulesParamsSchema = z.object({
         id: z.string().uuid(),
       })

@@ -3,7 +3,7 @@ import { FastifyInstance } from 'fastify'
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { prisma } from '../libs/prisma'
-import { verifyJwt } from '../middlewares/jwt-auth'
+import { userEmailTokenRequest, verifyJwt } from '../middlewares/jwt-auth'
 import { ClientError } from '../error-handler'
 
 export async function invoiceRoutes(app: FastifyInstance) {
@@ -74,6 +74,7 @@ export async function invoiceRoutes(app: FastifyInstance) {
           due_date,
           status: 'PENDING',
           organization_id,
+          updated_by: userEmailTokenRequest(request),
         },
       })
 
@@ -132,6 +133,7 @@ export async function invoiceRoutes(app: FastifyInstance) {
             amount,
             due_date,
             status: newInvoiceStatus,
+            updated_by: userEmailTokenRequest(request),
           },
         })
       })

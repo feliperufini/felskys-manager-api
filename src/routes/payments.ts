@@ -4,42 +4,47 @@ import { FastifyInstance } from 'fastify'
 import { prisma } from '../libs/prisma'
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { ClientError } from '../error-handler'
+import { userEmailTokenRequest, verifyJwt } from '../middlewares/jwt-auth'
 
 export async function paymentRoutes(app: FastifyInstance) {
-  app.withTypeProvider<ZodTypeProvider>().get('/', async () => {
-    const payments = await prisma.payment.findMany()
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .get('/', { onRequest: [verifyJwt] }, async () => {
+      const payments = await prisma.payment.findMany()
 
-    const newPayments = payments.map((payment) => ({
-      ...payment,
-      amount: Number(payment.amount),
-    }))
+      const newPayments = payments.map((payment) => ({
+        ...payment,
+        amount: Number(payment.amount),
+      }))
 
-    return { payments: newPayments }
-  })
-
-  app.withTypeProvider<ZodTypeProvider>().get('/:id', async (request) => {
-    const getPaymentsParamsSchema = z.object({
-      id: z.string().uuid(),
+      return { payments: newPayments }
     })
-    const { id } = getPaymentsParamsSchema.parse(request.params)
-
-    const payment = await prisma.payment.findUniqueOrThrow({
-      where: {
-        id,
-      },
-    })
-
-    const newPayments = {
-      ...payment,
-      amount: Number(payment.amount),
-    }
-
-    return { payment: newPayments }
-  })
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .post('/', async (request, response) => {
+    .get('/:id', { onRequest: [verifyJwt] }, async (request) => {
+      const getPaymentsParamsSchema = z.object({
+        id: z.string().uuid(),
+      })
+      const { id } = getPaymentsParamsSchema.parse(request.params)
+
+      const payment = await prisma.payment.findUniqueOrThrow({
+        where: {
+          id,
+        },
+      })
+
+      const newPayments = {
+        ...payment,
+        amount: Number(payment.amount),
+      }
+
+      return { payment: newPayments }
+    })
+
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .post('/', { onRequest: [verifyJwt] }, async (request, response) => {
       const createPaymentsBodySchema = z.object({
         amount: z.number().positive(),
         payment_date: z.coerce.date().max(new Date()),
@@ -93,6 +98,7 @@ export async function paymentRoutes(app: FastifyInstance) {
             payment_date,
             payment_method,
             invoice_id,
+            updated_by: userEmailTokenRequest(request),
           },
         })
 
@@ -113,7 +119,7 @@ export async function paymentRoutes(app: FastifyInstance) {
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .put('/:id', async (request, response) => {
+    .put('/:id', { onRequest: [verifyJwt] }, async (request, response) => {
       const getPaymentsParamsSchema = z.object({
         id: z.string().uuid(),
       })
@@ -182,6 +188,7 @@ export async function paymentRoutes(app: FastifyInstance) {
             amount,
             payment_date,
             payment_method,
+            updated_by: userEmailTokenRequest(request),
           },
         })
 
@@ -202,7 +209,7 @@ export async function paymentRoutes(app: FastifyInstance) {
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .delete('/:id', async (request, response) => {
+    .delete('/:id', { onRequest: [verifyJwt] }, async (request, response) => {
       const getPaymentsParamsSchema = z.object({
         id: z.string().uuid(),
       })

@@ -4,6 +4,7 @@ import { FastifyInstance } from 'fastify'
 import { prisma } from '../libs/prisma'
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { generateUnderscoreSlug } from '../utils/general-helper'
+import { userEmailTokenRequest, verifyJwt } from '../middlewares/jwt-auth'
 
 export async function permissionRoutes(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get('/', async () => {
@@ -12,22 +13,24 @@ export async function permissionRoutes(app: FastifyInstance) {
     return { permissions }
   })
 
-  app.withTypeProvider<ZodTypeProvider>().get('/:id', async (request) => {
-    const getPermissionsParamsSchema = z.object({
-      id: z.string().uuid(),
-    })
-    const { id } = getPermissionsParamsSchema.parse(request.params)
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .get('/:id', { onRequest: [verifyJwt] }, async (request) => {
+      const getPermissionsParamsSchema = z.object({
+        id: z.string().uuid(),
+      })
+      const { id } = getPermissionsParamsSchema.parse(request.params)
 
-    const permission = await prisma.permission.findUniqueOrThrow({
-      where: { id },
-    })
+      const permission = await prisma.permission.findUniqueOrThrow({
+        where: { id },
+      })
 
-    return { permission }
-  })
+      return { permission }
+    })
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .post('/', async (request, response) => {
+    .post('/', { onRequest: [verifyJwt] }, async (request, response) => {
       const createPermissionsBodySchema = z.object({
         title: z.string().max(45),
         website_module_id: z.string().uuid(),
@@ -43,6 +46,7 @@ export async function permissionRoutes(app: FastifyInstance) {
           title,
           action: generateUnderscoreSlug(title),
           website_module_id,
+          updated_by: userEmailTokenRequest(request),
         },
       })
 
@@ -53,52 +57,58 @@ export async function permissionRoutes(app: FastifyInstance) {
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .post('/default-permissions', async (request, response) => {
-      const createPermissionsBodySchema = z.object({
-        website_module_id: z.string().uuid(),
-      })
-
-      const { website_module_id } = createPermissionsBodySchema.parse(
-        request.body,
-      )
-
-      await prisma.$transaction(async (prisma) => {
-        const websiteModule = await prisma.websiteModule.findUniqueOrThrow({
-          where: {
-            id: website_module_id,
-          },
+    .post(
+      '/default-permissions',
+      { onRequest: [verifyJwt] },
+      async (request, response) => {
+        const createPermissionsBodySchema = z.object({
+          website_module_id: z.string().uuid(),
         })
 
-        const defaultPermissions = [
-          'Listar',
-          'Buscar',
-          'Cadastrar',
-          'Editar',
-          'Deletar',
-        ]
+        const { website_module_id } = createPermissionsBodySchema.parse(
+          request.body,
+        )
 
-        for (const defaultPermission of defaultPermissions) {
-          const permissionTitle = defaultPermission + ' ' + websiteModule.title
-
-          await prisma.permission.create({
-            data: {
-              id: randomUUID(),
-              title: permissionTitle,
-              action: generateUnderscoreSlug(permissionTitle),
-              website_module_id,
+        await prisma.$transaction(async (prisma) => {
+          const websiteModule = await prisma.websiteModule.findUniqueOrThrow({
+            where: {
+              id: website_module_id,
             },
           })
-        }
-      })
 
-      return response
-        .status(201)
-        .send({ message: 'Permissões cadastradas com sucesso!' })
-    })
+          const defaultPermissions = [
+            'Listar',
+            'Buscar',
+            'Cadastrar',
+            'Editar',
+            'Deletar',
+          ]
+
+          for (const defaultPermission of defaultPermissions) {
+            const permissionTitle =
+              defaultPermission + ' ' + websiteModule.title
+
+            await prisma.permission.create({
+              data: {
+                id: randomUUID(),
+                title: permissionTitle,
+                action: generateUnderscoreSlug(permissionTitle),
+                website_module_id,
+                updated_by: userEmailTokenRequest(request),
+              },
+            })
+          }
+        })
+
+        return response
+          .status(201)
+          .send({ message: 'Permissões cadastradas com sucesso!' })
+      },
+    )
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .put('/:id', async (request, response) => {
+    .put('/:id', { onRequest: [verifyJwt] }, async (request, response) => {
       const getPermissionsParamsSchema = z.object({
         id: z.string().uuid(),
       })
@@ -118,10 +128,11 @@ export async function permissionRoutes(app: FastifyInstance) {
         },
         data: {
           title,
-          website_module_id,
           action: generateUnderscoreSlug(
             action && action !== '' ? action : title,
           ),
+          website_module_id,
+          updated_by: userEmailTokenRequest(request),
         },
       })
 
@@ -132,7 +143,7 @@ export async function permissionRoutes(app: FastifyInstance) {
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .delete('/:id', async (request, response) => {
+    .delete('/:id', { onRequest: [verifyJwt] }, async (request, response) => {
       const getPermissionsParamsSchema = z.object({
         id: z.string().uuid(),
       })

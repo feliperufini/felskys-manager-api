@@ -4,53 +4,60 @@ import { z } from 'zod'
 import { prisma } from '../libs/prisma'
 import { removeSpecialCharacters } from '../utils/general-helper'
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
+import { userEmailTokenRequest, verifyJwt } from '../middlewares/jwt-auth'
 
 export async function organizationRoutes(app: FastifyInstance) {
-  app.withTypeProvider<ZodTypeProvider>().get('/', async () => {
-    const organizations = await prisma.organization.findMany()
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .get('/', { onRequest: [verifyJwt] }, async () => {
+      const organizations = await prisma.organization.findMany()
 
-    return { organizations }
-  })
-
-  app.withTypeProvider<ZodTypeProvider>().get('/:id', async (request) => {
-    const getOrganizationsParamsSchema = z.object({
-      id: z.string().uuid(),
+      return { organizations }
     })
-    const { id } = getOrganizationsParamsSchema.parse(request.params)
-
-    const organization = await prisma.organization.findUniqueOrThrow({
-      where: {
-        id,
-      },
-    })
-
-    return { organization }
-  })
-
-  app.withTypeProvider<ZodTypeProvider>().get('/:id/roles', async (request) => {
-    const getOrganizationsParamsSchema = z.object({
-      id: z.string().uuid(),
-    })
-    const { id } = getOrganizationsParamsSchema.parse(request.params)
-
-    const organization = await prisma.organization.findUniqueOrThrow({
-      where: {
-        id,
-      },
-    })
-
-    const roles = await prisma.role.findMany({
-      where: {
-        organization_id: organization.id,
-      },
-    })
-
-    return { roles }
-  })
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .post('/', async (request, response) => {
+    .get('/:id', { onRequest: [verifyJwt] }, async (request) => {
+      const getOrganizationsParamsSchema = z.object({
+        id: z.string().uuid(),
+      })
+      const { id } = getOrganizationsParamsSchema.parse(request.params)
+
+      const organization = await prisma.organization.findUniqueOrThrow({
+        where: {
+          id,
+        },
+      })
+
+      return { organization }
+    })
+
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .get('/:id/roles', { onRequest: [verifyJwt] }, async (request) => {
+      const getOrganizationsParamsSchema = z.object({
+        id: z.string().uuid(),
+      })
+      const { id } = getOrganizationsParamsSchema.parse(request.params)
+
+      const organization = await prisma.organization.findUniqueOrThrow({
+        where: {
+          id,
+        },
+      })
+
+      const roles = await prisma.role.findMany({
+        where: {
+          organization_id: organization.id,
+        },
+      })
+
+      return { roles }
+    })
+
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .post('/', { onRequest: [verifyJwt] }, async (request, response) => {
       const createOrganizationsBodySchema = z.object({
         legal_name: z.string(),
         business_name: z.string(),
@@ -66,6 +73,7 @@ export async function organizationRoutes(app: FastifyInstance) {
           legal_name,
           business_name,
           document: removeSpecialCharacters(document),
+          updated_by: userEmailTokenRequest(request),
         },
       })
 
@@ -76,7 +84,7 @@ export async function organizationRoutes(app: FastifyInstance) {
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .put('/:id', async (request, response) => {
+    .put('/:id', { onRequest: [verifyJwt] }, async (request, response) => {
       const getOrganizationsParamsSchema = z.object({
         id: z.string().uuid(),
       })
@@ -100,6 +108,7 @@ export async function organizationRoutes(app: FastifyInstance) {
           business_name,
           document,
           is_active,
+          updated_by: userEmailTokenRequest(request),
         },
       })
 
@@ -110,7 +119,7 @@ export async function organizationRoutes(app: FastifyInstance) {
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .delete('/:id', async (request, response) => {
+    .delete('/:id', { onRequest: [verifyJwt] }, async (request, response) => {
       const getOrganizationsParamsSchema = z.object({
         id: z.string().uuid(),
       })

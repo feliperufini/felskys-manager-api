@@ -3,42 +3,47 @@ import { randomUUID } from 'crypto'
 import { FastifyInstance } from 'fastify'
 import { prisma } from '../libs/prisma'
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
+import { userEmailTokenRequest, verifyJwt } from '../middlewares/jwt-auth'
 
 export async function roleRoutes(app: FastifyInstance) {
-  app.withTypeProvider<ZodTypeProvider>().get('/', async () => {
-    const roles = await prisma.role.findMany()
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .get('/', { onRequest: [verifyJwt] }, async () => {
+      const roles = await prisma.role.findMany()
 
-    return { roles }
-  })
-
-  app.withTypeProvider<ZodTypeProvider>().get('/:id', async (request) => {
-    const getRolesParamsSchema = z.object({
-      id: z.string().uuid(),
+      return { roles }
     })
-    const { id } = getRolesParamsSchema.parse(request.params)
-
-    const role = await prisma.role.findUniqueOrThrow({
-      where: {
-        id,
-      },
-      include: {
-        permissions: {
-          select: {
-            id: true,
-            title: true,
-            action: true,
-            website_module_id: true,
-          },
-        },
-      },
-    })
-
-    return { role }
-  })
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .post('/', async (request, response) => {
+    .get('/:id', { onRequest: [verifyJwt] }, async (request) => {
+      const getRolesParamsSchema = z.object({
+        id: z.string().uuid(),
+      })
+      const { id } = getRolesParamsSchema.parse(request.params)
+
+      const role = await prisma.role.findUniqueOrThrow({
+        where: {
+          id,
+        },
+        include: {
+          permissions: {
+            select: {
+              id: true,
+              title: true,
+              action: true,
+              website_module_id: true,
+            },
+          },
+        },
+      })
+
+      return { role }
+    })
+
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .post('/', { onRequest: [verifyJwt] }, async (request, response) => {
       const createRolesBodySchema = z.object({
         name: z.string(),
         description: z.string(),
@@ -62,6 +67,7 @@ export async function roleRoutes(app: FastifyInstance) {
           permissions: {
             connect: permissionsIds,
           },
+          updated_by: userEmailTokenRequest(request),
         },
       })
 
@@ -72,7 +78,7 @@ export async function roleRoutes(app: FastifyInstance) {
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .put('/:id', async (request, response) => {
+    .put('/:id', { onRequest: [verifyJwt] }, async (request, response) => {
       const getRolesParamsSchema = z.object({
         id: z.string().uuid(),
       })
@@ -117,6 +123,7 @@ export async function roleRoutes(app: FastifyInstance) {
             disconnect: permissionsToDisconnect,
             connect: permissionsToConnect,
           },
+          updated_by: userEmailTokenRequest(request),
         },
       })
 
@@ -127,7 +134,7 @@ export async function roleRoutes(app: FastifyInstance) {
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .delete('/:id', async (request, response) => {
+    .delete('/:id', { onRequest: [verifyJwt] }, async (request, response) => {
       const getRolesParamsSchema = z.object({
         id: z.string().uuid(),
       })

@@ -35,7 +35,7 @@ export async function authenticationRoutes(app: FastifyInstance) {
 
       const EXPIRES_TOKEN_IN_HOURS = 23
 
-      const token = sign({ id: user.id }, env.JWT_SECRET, {
+      const token = sign({ id: user.id, email: user.email }, env.JWT_SECRET, {
         expiresIn: EXPIRES_TOKEN_IN_HOURS + 'h',
       })
       const tokenExpiresAt = new Date(

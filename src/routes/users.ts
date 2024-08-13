@@ -5,32 +5,37 @@ import { ZodTypeProvider } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 import { prisma } from '../libs/prisma'
 import { checkPasswordIsValid } from '../utils/general-helper'
+import { userEmailTokenRequest, verifyJwt } from '../middlewares/jwt-auth'
 
 export async function userRoutes(app: FastifyInstance) {
-  app.withTypeProvider<ZodTypeProvider>().get('/', async () => {
-    const users = await prisma.user.findMany()
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .get('/', { onRequest: [verifyJwt] }, async () => {
+      const users = await prisma.user.findMany()
 
-    return { users }
-  })
-
-  app.withTypeProvider<ZodTypeProvider>().get('/:id', async (request) => {
-    const getUsersParamsSchema = z.object({
-      id: z.string().uuid(),
+      return { users }
     })
-    const { id } = getUsersParamsSchema.parse(request.params)
-
-    const user = await prisma.user.findUniqueOrThrow({
-      where: {
-        id,
-      },
-    })
-
-    return { user }
-  })
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .post('/', async (request, response) => {
+    .get('/:id', { onRequest: [verifyJwt] }, async (request) => {
+      const getUsersParamsSchema = z.object({
+        id: z.string().uuid(),
+      })
+      const { id } = getUsersParamsSchema.parse(request.params)
+
+      const user = await prisma.user.findUniqueOrThrow({
+        where: {
+          id,
+        },
+      })
+
+      return { user }
+    })
+
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .post('/', { onRequest: [verifyJwt] }, async (request, response) => {
       const createUsersBodySchema = z.object({
         nickname: z.string().min(3),
         email: z.string().email(),
@@ -58,6 +63,7 @@ export async function userRoutes(app: FastifyInstance) {
           email,
           password_hash: passwordHash,
           role_id,
+          updated_by: userEmailTokenRequest(request),
         },
       })
 
@@ -68,7 +74,7 @@ export async function userRoutes(app: FastifyInstance) {
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .put('/:id', async (request, response) => {
+    .put('/:id', { onRequest: [verifyJwt] }, async (request, response) => {
       const getUsersParamsSchema = z.object({
         id: z.string().uuid(),
       })
@@ -91,6 +97,7 @@ export async function userRoutes(app: FastifyInstance) {
         password_hash?: string
         is_active: boolean
         role_id: string
+        updated_by: string
       }
 
       const requestUserData: UpdateRequestType = {
@@ -98,6 +105,7 @@ export async function userRoutes(app: FastifyInstance) {
         email,
         is_active,
         role_id,
+        updated_by: userEmailTokenRequest(request),
       }
 
       if (password && password !== '') {
@@ -124,7 +132,7 @@ export async function userRoutes(app: FastifyInstance) {
 
   app
     .withTypeProvider<ZodTypeProvider>()
-    .delete('/:id', async (request, response) => {
+    .delete('/:id', { onRequest: [verifyJwt] }, async (request, response) => {
       const getUsersParamsSchema = z.object({
         id: z.string().uuid(),
       })
