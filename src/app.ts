@@ -1,5 +1,6 @@
 import fastifyCors from '@fastify/cors'
 import fastifyJwt from '@fastify/jwt'
+import fastifyMiddie from '@fastify/middie'
 import fastify from 'fastify'
 import {
   serializerCompiler,
@@ -7,7 +8,9 @@ import {
 } from 'fastify-type-provider-zod'
 import { env } from './env'
 import { errorHandler } from './error-handler'
+import { logging } from './middlewares/logging'
 import { authenticationRoutes } from './routes/authentications'
+import { invoiceRoutes } from './routes/invoices'
 import { organizationRoutes } from './routes/organizations'
 import { paymentRoutes } from './routes/payments'
 import { permissionRoutes } from './routes/permissions'
@@ -15,7 +18,6 @@ import { roleRoutes } from './routes/roles'
 import { userRoutes } from './routes/users'
 import { websiteModuleRoutes } from './routes/website-modules'
 import { websiteRoutes } from './routes/websites'
-import { invoiceRoutes } from './routes/invoices'
 
 export const app = fastify() // fastify({ logger: true })
 
@@ -31,6 +33,12 @@ app.register(fastifyJwt, {
 app.register(fastifyCors, {
   origin: '*',
 })
+
+app
+  .register(fastifyMiddie, {
+    hook: 'onResponse',
+  })
+  .register(logging)
 
 app.register(authenticationRoutes)
 

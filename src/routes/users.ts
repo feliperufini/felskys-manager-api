@@ -11,7 +11,18 @@ export async function userRoutes(app: FastifyInstance) {
   app
     .withTypeProvider<ZodTypeProvider>()
     .get('/', { onRequest: [verifyJwt] }, async () => {
-      const users = await prisma.user.findMany()
+      const users = await prisma.user.findMany({
+        select: {
+          id: true,
+          nickname: true,
+          email: true,
+          is_active: true,
+          role_id: true,
+          created_at: true,
+          updated_at: true,
+          updated_by: true,
+        },
+      })
 
       return { users }
     })
@@ -27,6 +38,16 @@ export async function userRoutes(app: FastifyInstance) {
       const user = await prisma.user.findUniqueOrThrow({
         where: {
           id,
+        },
+        select: {
+          id: true,
+          nickname: true,
+          email: true,
+          is_active: true,
+          role_id: true,
+          created_at: true,
+          updated_at: true,
+          updated_by: true,
         },
       })
 

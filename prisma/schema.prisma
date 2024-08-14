@@ -46,14 +46,33 @@ model User {
   email         String   @unique
   password_hash String
   is_active     Boolean  @default(true)
-  role_id       String?
+  role_id       String
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
   updated_by    String
+  logs          Log[]
 
-  role Role? @relation(fields: [role_id], references: [id])
+  role Role @relation(fields: [role_id], references: [id])
 
   @@map("users")
+}
+
+model Log {
+  id          String   @id @default(uuid())
+  method      String
+  model       String
+  register_id String
+  api_route   String
+  message     String
+  context     String? // o DELETE não tem body
+  level       String
+  status_code Int
+  created_at  DateTime @default(now())
+  created_by  String
+
+  user User @relation(fields: [created_by], references: [id])
+
+  @@map("logs")
 }
 
 model Website {

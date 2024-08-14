@@ -33,7 +33,16 @@ export async function invoiceRoutes(app: FastifyInstance) {
           id,
         },
         include: {
-          payments: true,
+          payments: {
+            select: {
+              id: true,
+              amount: true,
+              payment_date: true,
+              payment_method: true,
+              created_at: true,
+              updated_at: true,
+            },
+          },
         },
       })
 
