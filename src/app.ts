@@ -3,8 +3,8 @@ import fastifyJwt from '@fastify/jwt'
 import fastifyMiddie from '@fastify/middie'
 import fastify from 'fastify'
 import {
-  serializerCompiler,
-  validatorCompiler,
+	serializerCompiler,
+	validatorCompiler,
 } from 'fastify-type-provider-zod'
 import { env } from './env'
 import { errorHandler } from './error-handler'
@@ -27,49 +27,49 @@ app.setSerializerCompiler(serializerCompiler)
 app.setErrorHandler(errorHandler)
 
 app.register(fastifyJwt, {
-  secret: env.JWT_SECRET,
+	secret: env.JWT_SECRET,
 })
 
 app.register(fastifyCors, {
-  origin: '*',
+	origin: '*',
 })
 
 app
-  .register(fastifyMiddie, {
-    hook: 'onResponse',
-  })
-  .register(logging)
+	.register(fastifyMiddie, {
+		hook: 'onResponse',
+	})
+	.register(logging)
 
 app.register(authenticationRoutes)
 
 app.register(invoiceRoutes, {
-  prefix: 'invoices',
+	prefix: 'invoices',
 })
 
 app.register(organizationRoutes, {
-  prefix: 'organizations',
+	prefix: 'organizations',
 })
 
 app.register(paymentRoutes, {
-  prefix: 'payments',
+	prefix: 'payments',
 })
 
 app.register(permissionRoutes, {
-  prefix: 'permissions',
+	prefix: 'permissions',
 })
 
 app.register(roleRoutes, {
-  prefix: 'roles',
+	prefix: 'roles',
 })
 
 app.register(userRoutes, {
-  prefix: 'users',
+	prefix: 'users',
 })
 
 app.register(websiteRoutes, {
-  prefix: 'websites',
+	prefix: 'websites',
 })
 
 app.register(websiteModuleRoutes, {
-  prefix: 'website-modules',
+	prefix: 'website-modules',
 })

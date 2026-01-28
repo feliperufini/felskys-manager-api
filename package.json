@@ -1,48 +1,47 @@
 {
-  "name": "felskys-manager-api",
-  "version": "0.0.0",
-  "description": "Felsky's Website Manager API",
-  "main": "index.js",
-  "keywords": [],
-  "author": "Felsky",
-  "license": "MIT",
-  "engines": {
-    "node": "18"
-  },
-  "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "lint": "eslint src --ext .ts --fix",
-    "test": "vitest",
-    "build": "tsup src --out-dir build"
-  },
-  "dependencies": {
-    "@fastify/cookie": "^9.3.1",
-    "@fastify/cors": "^9.0.1",
-    "@fastify/jwt": "^8.0.1",
-    "@fastify/middie": "^8.3.1",
-    "@prisma/client": "^5.18.0",
-    "bcryptjs": "^2.4.3",
-    "dayjs": "^1.11.12",
-    "dotenv": "^16.4.5",
-    "fastify": "^4.28.0",
-    "fastify-type-provider-zod": "^2.0.0",
-    "jsonwebtoken": "^9.0.2",
-    "pg": "^8.12.0",
-    "vitest": "^1.6.0",
-    "zod": "^3.23.8"
-  },
-  "devDependencies": {
-    "@rocketseat/eslint-config": "^2.2.2",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/jsonwebtoken": "^9.0.6",
-    "@types/node": "^20.14.7",
-    "@types/supertest": "^6.0.2",
-    "eslint": "^8.57.0",
-    "prisma": "^5.18.0",
-    "sqlite3": "^5.1.7",
-    "supertest": "^7.0.0",
-    "tsup": "^8.1.0",
-    "tsx": "^4.15.7",
-    "typescript": "^5.5.2"
-  }
+	"name": "felskys-manager-api",
+	"version": "0.0.0",
+	"description": "Felsky's Website Manager API",
+	"main": "index.js",
+	"keywords": [],
+	"author": "Felsky",
+	"license": "MIT",
+	"engines": {
+		"node": "20"
+	},
+	"scripts": {
+		"dev": "tsx watch src/server.ts",
+		"lint": "npx @biomejs/biome format --write src",
+		"test": "vitest",
+		"build": "tsup src --out-dir build"
+	},
+	"dependencies": {
+		"@fastify/cookie": "^9.3.1",
+		"@fastify/cors": "^9.0.1",
+		"@fastify/jwt": "^8.0.1",
+		"@fastify/middie": "^8.3.1",
+		"@prisma/client": "^5.18.0",
+		"bcryptjs": "^2.4.3",
+		"dayjs": "^1.11.12",
+		"dotenv": "^16.4.5",
+		"fastify": "^4.28.0",
+		"fastify-type-provider-zod": "^2.0.0",
+		"jsonwebtoken": "^9.0.2",
+		"pg": "^8.12.0",
+		"vitest": "^1.6.0",
+		"zod": "^3.23.8"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.8.3",
+		"@types/bcryptjs": "^2.4.6",
+		"@types/jsonwebtoken": "^9.0.6",
+		"@types/node": "^20.14.7",
+		"@types/supertest": "^6.0.2",
+		"prisma": "^5.18.0",
+		"sqlite3": "^5.1.7",
+		"supertest": "^7.0.0",
+		"tsup": "^8.1.0",
+		"tsx": "^4.15.7",
+		"typescript": "^5.5.2"
+	}
 }

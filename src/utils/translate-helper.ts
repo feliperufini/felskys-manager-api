@@ -1,20 +1,43 @@
-const moduleNameTranslations: Record<string, string> = {
-  organizations: 'Organização',
-  invoices: 'Fatura',
-  payments: 'Pagamento',
-  roles: 'Função',
-  permissions: 'Permissão',
-  users: 'Usuário',
-  'website-modules': 'Módulo',
-  websites: 'Website',
+const modelNameTranslations: Record<string, string> = {
+	organizations: 'Organização',
+	Organization: 'Organização',
+	invoices: 'Fatura',
+	Invoice: 'Fatura',
+	payments: 'Pagamento',
+	Payment: 'Pagamento',
+	roles: 'Função',
+	Role: 'Função',
+	permissions: 'Permissão',
+	Permission: 'Permissão',
+	users: 'Usuário',
+	User: 'Usuário',
+	'website-modules': 'Módulo',
+	WebsiteModule: 'Módulo',
+	websites: 'Website',
+	Website: 'Website',
 }
 
-export function getModuleNameTranslation(name: string): string {
-  return moduleNameTranslations[name] || 'Item'
+const modelNameDatabase: Record<string, string> = {
+	organizations: 'Organization',
+	invoices: 'Invoice',
+	payments: 'Payment',
+	roles: 'Role',
+	permissions: 'Permission',
+	users: 'User',
+	'website-modules': 'WebsiteModule',
+	websites: 'Website',
 }
 
-export function getModuleNameTranslationFromUrl(url: string): string {
-  const urlMainModule = url.split('/')[1]
+export function getModelNameTranslated(name: string): string {
+	return modelNameTranslations[name] || 'Item'
+}
 
-  return getModuleNameTranslation(urlMainModule)
+export function getModelNameTranslatedFromUrl(url: string): string {
+	const urlMainModel = url.split('/')[1]
+
+	return getModelNameTranslated(urlMainModel)
+}
+
+export function getModelNameDatabase(name: string): string {
+	return modelNameDatabase[name] || 'NOT_FOUND'
 }
